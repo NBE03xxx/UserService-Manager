@@ -1,11 +1,11 @@
 # User Service Manager — 設計文書
 
-Ubuntu/GNOME/Wayland 上で、一般ユーザーが `systemd --user` のユーザーサービスを安全に確認・操作するための GTK/libadwaita GUI アプリケーションです。第一検証環境は Ubuntu 26.04 LTS で、v1.0.0の実装、自動テスト、実機受入、Debian package buildを完了しています。
+Ubuntu/GNOME/Wayland 上で、一般ユーザーが `systemd --user` のユーザーサービスを安全に確認・操作するための GTK/libadwaita GUI アプリケーションです。第一検証環境は Ubuntu 26.04 LTS で、v1.0.1の実装、自動テスト、実機受入、Debian package buildを完了しています。
 
 - GitHub: https://github.com/NBE03xxx/UserService-Manager
 - License: [MIT](LICENSE)
 
-## v1.0.0 の機能範囲
+## v1.0.1 の機能範囲
 
 - 対象ユニット: `.service` のみ
 - 発見起点: `~/.config/systemd/user/`
@@ -54,10 +54,10 @@ Ubuntu/GNOME/Wayland 上で、一般ユーザーが `systemd --user` のユー�
 
 ## インストール
 
-[GitHub Releases](https://github.com/NBE03xxx/UserService-Manager/releases/latest) から `user-service-manager_1.0.0_all.deb` をダウンロードし、ファイルのあるディレクトリで次を実行します。
+[GitHub Releases](https://github.com/NBE03xxx/UserService-Manager/releases/latest) から `user-service-manager_1.0.1_all.deb` をダウンロードし、ファイルのあるディレクトリで次を実行します。
 
 ```bash
-sudo apt install ./user-service-manager_1.0.0_all.deb
+sudo apt install ./user-service-manager_1.0.1_all.deb
 ```
 
 インストール後はGNOMEのアプリ一覧から「ユーザーサービスマネージャー」を起動できます。アンインストールは次のコマンドで行います。

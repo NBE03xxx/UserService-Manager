@@ -1,6 +1,6 @@
 msgid ""
 msgstr ""
-"Project-Id-Version: user-service-manager 1.0.0\n"
+"Project-Id-Version: user-service-manager 1.0.1\n"
 "Language: ja\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -11,8 +11,11 @@ msgstr "ユーザーサービスマネージャー"
 msgid "User services"
 msgstr "ユーザーサービス"
 
-msgid "A quiet overview"
-msgstr "落ち着いた一覧"
+msgid "Service list"
+msgstr "サービス一覧"
+
+msgid "Managed: {count}"
+msgstr "管理対象 {count}件"
 
 msgid "Appearance: system"
 msgstr "外観：システム設定に従う"

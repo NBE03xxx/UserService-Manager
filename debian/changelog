@@ -1,3 +1,10 @@
+user-service-manager (1.0.1) unstable; urgency=medium
+
+  * Replace the repetitive header wording with a concise service list title.
+  * Show the current number of managed services in the header.
+
+ -- NBE03xxx <NBE03xxx@users.noreply.github.com>  Fri, 28 Aug 2026 00:00:01 +0900
+
 user-service-manager (1.0.0) unstable; urgency=medium
 
   * Initial stable release.

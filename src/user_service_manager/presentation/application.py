@@ -64,6 +64,14 @@ def filter_units(
     return tuple(filtered)
 
 
+def managed_unit_count(units: tuple[UnitRecord, ...]) -> int:
+    return sum(
+        unit.registration_state
+        in {RegistrationState.REGISTERED, RegistrationState.MISSING}
+        for unit in units
+    )
+
+
 class LogWindow(Adw.Window):
     def __init__(
         self,
@@ -267,9 +275,11 @@ class MainWindow(Adw.ApplicationWindow):
         toolbar = Adw.ToolbarView()
         header = Adw.HeaderBar()
         header.add_css_class("coffee-header")
-        header.set_title_widget(
-            Adw.WindowTitle(title=_("User services"), subtitle=_("A quiet overview"))
+        self.window_title = Adw.WindowTitle(
+            title=_("Service list"),
+            subtitle=_("Managed: {count}").format(count=managed_unit_count(app.units)),
         )
+        header.set_title_widget(self.window_title)
         toolbar.add_top_bar(header)
 
         menu = Gio.Menu()
@@ -376,6 +386,9 @@ class MainWindow(Adw.ApplicationWindow):
         self.notify(_("Diagnostic details copied"))
 
     def show_units(self, units: tuple[UnitRecord, ...]) -> None:
+        self.window_title.set_subtitle(
+            _("Managed: {count}").format(count=managed_unit_count(self.app.units))
+        )
         self._clear_group()
         if not units:
             self._add_row(Adw.ActionRow(title=_("No user services were found")))

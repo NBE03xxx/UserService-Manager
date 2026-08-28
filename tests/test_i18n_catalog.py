@@ -19,7 +19,11 @@ class I18nCatalogTests(unittest.TestCase):
             target.write_bytes(compile_catalog(catalog))
             with target.open("rb") as stream:
                 translation = gettext.GNUTranslations(stream)
-        self.assertEqual(translation.gettext("User services"), "ユーザーサービス")
+        self.assertEqual(translation.gettext("Service list"), "サービス一覧")
+        self.assertEqual(
+            translation.gettext("Managed: {count}").format(count=3),
+            "管理対象 3件",
+        )
         self.assertEqual(translation.gettext("Service logs"), "サービスログ")
 
     def test_catalog_preserves_format_placeholders(self) -> None:
