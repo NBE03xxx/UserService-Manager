@@ -1,15 +1,15 @@
-# v0.1 リリース準備状況
+# v1.0.0 リリース準備状況
 
 ## 判定
 
-**実装受入: 条件付き合格。配布リリース: 未承認。**
+**実装受入: 合格。配布リリース: 承認。**
 
-フェーズ1〜6の機能実装とUbuntu 26.04 LTS上の主要実機検証は完了した。Must要件の中核挙動、ネイティブpackageのbuild/install/uninstall、縮退動作、アクセシビリティを確認できている。一般公開用v0.1としては、GitHubの公開URL確定が残っている。
+フェーズ1〜6の機能実装とUbuntu 26.04 LTS上の主要実機検証は完了した。Must要件の中核挙動、ネイティブpackageのbuild/install/uninstall、縮退動作、アクセシビリティを確認できている。GitHubの公開URLと正式版v1.0.0の採用も確定した。
 
 ## 完了した証跡
 
 - 要件ID 39件とTEST_PLAN追跡IDが完全一致
-- 自動テス50件成功
+- 自動テスト51件成功
 - GSettings schema strict検証成功
 - desktop entry検証成功
 - AppStream XML構文検証成功
@@ -19,16 +19,16 @@
 - 日本語・英語の主要画面、ログ画面、ライト／ダーク、スクロールを確認
 - 診断情報を通常表示から分離し、明示コピーを提供
 - Meson configure/build/test、gettext catalog build、一時領域へのinstall smoke testが成功
-- Debian package `user-service-manager_0.1.0~dev1_all.deb`のbuildが成功
+- Debian開発packageのbuild、install、uninstall検証が成功
 - Ubuntu 26.04 LTSで`.deb`のinstallと製品モード起動が成功
 - `.deb`のuninstall/reinstallに成功し、ユーザーの登録サービスと外観設定が保持されることを確認
 - Open JTalk日本語音声を使うOrcaで主要button、状態、read-only理由、確認画面を実機確認
+- Debian package `user-service-manager_1.0.0_all.deb`の再buildと内容・依存関係・version検査が成功
+- 正式packageのSHA-256は `2a2fdf8e59688b495c9860198a00fc2a6c79d94ff7da0dcaccfe2a87e09435c8`
 
 ## 未完了・リリース阻害項目
 
-| 項目 | 関連要件 | 状態 | 解消条件 |
-|---|---|---|---|
-| AppStream homepage | 配布品質 | 公開先未決 | 正式URL決定後にmetadataへ追加 |
+なし。
 FR-015の追加管理範囲UIはShould要件であり、v0.1では既知の制約とする。policyの拡張点とGSettings schemaは用意済みで、後続フェーズで設定UIと永続化を実装する。
 
 トップ文言は「ユーザーサービスマネージャー」と「〜ごゆっくりどうぞ〜」に確定し、英語は「User Service Manager」と「— Take your time —」とする。
@@ -41,10 +41,10 @@ FR-015の追加管理範囲UIはShould要件であり、v0.1では既知の制�
 - 日本語・英語を分離した通常セッション用ランチャー
 - 統合受入チェックリスト
 
-## 次の判定ゲート
+## 公開手順
 
-1. GitHubの公開URLを確定し、AppStreamとREADMEを更新する。
-2. 全Must受入項目完了後にのみv0.1リリース承認へ変更する。
+1. `v1.0.0` tagを正式版commitへ付与する。
+2. GitHub Releaseへ`.deb`とSHA-256 checksumを添付する。
 
 ## 縮退時の外観制約
 

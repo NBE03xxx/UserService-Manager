@@ -1,7 +1,7 @@
 Source: user-service-manager
 Section: utils
 Priority: optional
-Maintainer: User Service Manager Contributors <noreply@example.invalid>
+Maintainer: NBE03xxx <NBE03xxx@users.noreply.github.com>
 Build-Depends:
  debhelper-compat (= 13),
  dh-python,

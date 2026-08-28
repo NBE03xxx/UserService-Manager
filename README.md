@@ -1,11 +1,11 @@
 # User Service Manager — 設計文書
 
-Ubuntu/GNOME/Wayland 上で、一般ユーザーが `systemd --user` のユーザーサービスを安全に確認・操作するための GTK/libadwaita GUI アプリケーションです。第一検証環境は Ubuntu 26.04 LTS で、v0.1の実装、自動テスト、実機受入、Debian package buildを完了しています。
+Ubuntu/GNOME/Wayland 上で、一般ユーザーが `systemd --user` のユーザーサービスを安全に確認・操作するための GTK/libadwaita GUI アプリケーションです。第一検証環境は Ubuntu 26.04 LTS で、v1.0.0の実装、自動テスト、実機受入、Debian package buildを完了しています。
 
 - GitHub: https://github.com/NBE03xxx/UserService-Manager
 - License: [MIT](LICENSE)
 
-## v0.1 の範囲
+## v1.0.0 の機能範囲
 
 - 対象ユニット: `.service` のみ
 - 発見起点: `~/.config/systemd/user/`
@@ -33,7 +33,7 @@ Ubuntu/GNOME/Wayland 上で、一般ユーザーが `systemd --user` のユー�
 | [ROADMAP.md](docs/ROADMAP.md) | v0.1 と後続段階の境界 |
 | [DECISIONS.md](docs/DECISIONS.md) | 主要な設計判断と未決事項 |
 | [DESIGN_REVIEW.md](docs/DESIGN_REVIEW.md) | 実装前レビュー、指摘、要確認事項 |
-| [IMPLEMENTATION_PLAN.md](docs/IMPLEMENTATION_PLAN.md) | v0.1 の段階的な実装計画（コードは未作成） |
+| [IMPLEMENTATION_PLAN.md](docs/IMPLEMENTATION_PLAN.md) | v0.1要件を実現した段階的な実装計画と記録 |
 | [TECHNICAL_SPIKE.md](docs/TECHNICAL_SPIKE.md) | Ubuntu 26.04での技術調査と採用判断 |
 | [VALIDATION_PLAN.md](docs/VALIDATION_PLAN.md) | 製品実装前の安全な実機検証計画 |
 | [VALIDATION_RESULTS.md](docs/VALIDATION_RESULTS.md) | 実機検証の結果と残課題 |
@@ -51,6 +51,20 @@ Ubuntu/GNOME/Wayland 上で、一般ユーザーが `systemd --user` のユー�
 ## 現在の実装状態
 
 フェーズ1からフェーズ6まで完了しました。発見、登録、missing保持、詳細取得、安全性判定、変更操作、journal表示、国際化、外観、アクセシビリティ、`.deb`のインストール往復をUbuntu 26.04 LTSで確認済みです。詳細は `docs/RELEASE_READINESS.md` を参照してください。
+
+## インストール
+
+[GitHub Releases](https://github.com/NBE03xxx/UserService-Manager/releases/latest) から `user-service-manager_1.0.0_all.deb` をダウンロードし、ファイルのあるディレクトリで次を実行します。
+
+```bash
+sudo apt install ./user-service-manager_1.0.0_all.deb
+```
+
+インストール後はGNOMEのアプリ一覧から「ユーザーサービスマネージャー」を起動できます。アンインストールは次のコマンドで行います。
+
+```bash
+sudo apt remove user-service-manager
+```
 
 ## 安全な配置について
 

@@ -23,8 +23,8 @@ jobs:
         run: glib-compile-schemas --strict --dry-run data
       - name: Validate desktop metadata
         run: |
-          desktop-file-validate data/io.github.userservicemanager.UserServiceManager.desktop
-          appstreamcli validate --no-net data/io.github.userservicemanager.UserServiceManager.metainfo.xml
+          desktop-file-validate data/io.github.NBE03xxx.UserServiceManager.desktop
+          appstreamcli validate --no-net data/io.github.NBE03xxx.UserServiceManager.metainfo.xml
       - name: Meson build and test
         run: |
           meson setup build

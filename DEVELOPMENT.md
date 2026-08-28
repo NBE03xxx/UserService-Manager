@@ -2,7 +2,7 @@
 
 ## 現在の段階
 
-フェーズ6の統合・配布検証を進めています。ソースからの開発起動は安全なmock backendを使用します。`USM_BACKEND=systemd`で実状態とjournalの読み取りを接続し、変更操作はさらに`USM_COMMANDS=enabled`を明示した場合だけ接続されます。インストール済みの`user-service-manager`ランチャーは製品用として両方を有効にしますが、すべての変更操作に登録・path policy・操作直前再評価の安全ゲートが適用されます。
+v1.0.0の実装と統合・配布検証は完了しています。ソースからの開発起動は安全なmock backendを使用します。`USM_BACKEND=systemd`で実状態とjournalの読み取りを接続し、変更操作はさらに`USM_COMMANDS=enabled`を明示した場合だけ接続されます。インストール済みの`user-service-manager`ランチャーは製品用として両方を有効にしますが、すべての変更操作に登録・path policy・操作直前再評価の安全ゲートが適用されます。
 
 ## Ubuntu 26.04で想定する開発依存
 

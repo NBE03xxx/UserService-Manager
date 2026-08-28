@@ -1,6 +1,6 @@
 project(
   'user-service-manager',
-  version: '0.1.0-dev',
+  version: '1.0.0',
   meson_version: '>= 1.3.0',
 )
 

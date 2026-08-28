@@ -14,4 +14,11 @@
   </description>
   <url type="homepage">https://github.com/NBE03xxx/UserService-Manager</url>
   <launchable type="desktop-id">io.github.NBE03xxx.UserServiceManager.desktop</launchable>
+  <releases>
+    <release version="1.0.0" date="2026-08-28">
+      <description>
+        <p>First stable release.</p>
+      </description>
+    </release>
+  </releases>
 </component>
