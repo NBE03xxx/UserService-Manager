@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>io.github.NBE03xxx.UserServiceManager</id>
+  <name>User Service Manager</name>
+  <summary>Review and manage your systemd user services</summary>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>MIT</project_license>
+  <developer id="io.github.nbe03xxx">
+    <name>User Service Manager contributors</name>
+  </developer>
+  <content_rating type="oars-1.1" />
+  <description>
+    <p>A calm GNOME application for reviewing and managing explicitly registered user services.</p>
+  </description>
+  <url type="homepage">https://github.com/NBE03xxx/UserService-Manager</url>
+  <launchable type="desktop-id">io.github.NBE03xxx.UserServiceManager.desktop</launchable>
+</component>

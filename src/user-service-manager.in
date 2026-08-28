@@ -1,0 +1,11 @@
+#!@PYTHON@
+import os
+
+from user_service_manager.main import main
+
+# The installed desktop application is the production entry point.  Developers
+# can still override either value explicitly when exercising mock/degraded modes.
+os.environ.setdefault("USM_BACKEND", "systemd")
+os.environ.setdefault("USM_COMMANDS", "enabled")
+
+raise SystemExit(main())

@@ -1,0 +1,18 @@
+[project]
+name = "user-service-manager"
+version = "0.1.0.dev0"
+description = "A safe GTK frontend for systemd user services"
+requires-python = ">=3.12"
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+packages = ["user_service_manager"]
+mypy_path = "src"
+
+[tool.coverage.run]
+source = ["user_service_manager"]

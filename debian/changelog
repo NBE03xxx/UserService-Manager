@@ -1,0 +1,5 @@
+user-service-manager (0.1.0~dev1) unstable; urgency=medium
+
+  * Initial development package for Ubuntu 26.04 LTS validation.
+
+ -- User Service Manager Contributors <noreply@example.invalid>  Thu, 27 Aug 2026 00:00:00 +0900

@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schemalist>
+  <schema id="io.github.NBE03xxx.UserServiceManager"
+          path="/io/github/NBE03xxx/UserServiceManager/">
+    <key name="schema-version" type="u">
+      <default>1</default>
+      <summary>Settings schema version</summary>
+    </key>
+    <key name="appearance" type="s">
+      <default>'system'</default>
+      <choices>
+        <choice value="system"/>
+        <choice value="light"/>
+        <choice value="dark"/>
+      </choices>
+      <summary>Appearance preference</summary>
+    </key>
+    <key name="language" type="s">
+      <default>'system'</default>
+      <choices>
+        <choice value="system"/>
+        <choice value="ja"/>
+        <choice value="en"/>
+      </choices>
+      <summary>Language preference</summary>
+    </key>
+    <key name="registered-units" type="as">
+      <default>[]</default>
+      <summary>Explicitly registered service unit IDs</summary>
+    </key>
+    <key name="trusted-user-roots" type="as">
+      <default>[]</default>
+      <summary>Additional user-managed roots</summary>
+    </key>
+  </schema>
+</schemalist>

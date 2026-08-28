@@ -1,0 +1,69 @@
+window.coffee-window.coffee-light {
+  --coffee-accent: #865e3c;
+  --coffee-canvas-bg: #f1e7d8;
+  --coffee-surface: #fffaf2;
+  --coffee-surface-raised: #fffdf8;
+  --coffee-border: alpha(#63452c, 0.22);
+  --coffee-muted: #6f5a49;
+  --coffee-pattern: alpha(#879273, 0.10);
+  background: var(--coffee-canvas-bg);
+}
+
+window.coffee-window.coffee-dark {
+  --coffee-accent: #d6ad73;
+  --coffee-canvas-bg: #201c21;
+  --coffee-surface: #30272b;
+  --coffee-surface-raised: #3a2d32;
+  --coffee-border: alpha(#d6ad73, 0.30);
+  --coffee-muted: #d9c5b6;
+  --coffee-pattern: alpha(#8e5966, 0.16);
+  background: var(--coffee-canvas-bg);
+}
+
+.coffee-window .coffee-header {
+  background: var(--coffee-canvas-bg);
+}
+
+.coffee-window .coffee-canvas {
+  background-color: var(--coffee-canvas-bg);
+  background-image: repeating-linear-gradient(
+    135deg,
+    transparent 0,
+    transparent 17px,
+    var(--coffee-pattern) 18px,
+    transparent 19px,
+    transparent 36px
+  );
+}
+
+.coffee-window .coffee-hero {
+  margin-bottom: 4px;
+  padding: 16px;
+  border: 1px solid var(--coffee-border);
+  border-radius: 18px;
+  background-image: linear-gradient(
+    to bottom right,
+    var(--coffee-surface-raised),
+    var(--coffee-surface)
+  );
+  box-shadow: 0 8px 24px alpha(#120d0f, 0.16);
+}
+
+.coffee-window .coffee-hero image {
+  -gtk-icon-size: 96px;
+}
+
+.coffee-window .coffee-service-row {
+  background: var(--coffee-surface);
+}
+
+.coffee-window .coffee-service-row:hover {
+  background: var(--coffee-surface-raised);
+}
+
+.readonly-badge {
+  padding: 4px 9px;
+  border-radius: 999px;
+  border: 1px solid var(--coffee-border);
+  color: var(--coffee-muted);
+}

@@ -1,0 +1,20 @@
+__pycache__/
+*.py[cod]
+.mypy_cache/
+.ruff_cache/
+.coverage
+build/
+obj-*/
+data/gschemas.compiled
+*.mo
+debian/.debhelper/
+debian/debhelper-build-stamp
+debian/files
+debian/*.debhelper
+debian/*.substvars
+debian/user-service-manager/
+
+# Unused visual design candidates kept locally for reference.
+src/user_service_manager/presentation/assets/cafe-shortcake-coffee.png
+src/user_service_manager/presentation/assets/cafe-shortcake-coffee-v2.png
+src/user_service_manager/presentation/assets/cafe-cheesecake-coffee-v3.png

@@ -1,0 +1,32 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Ubuntu dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes \
+            appstream desktop-file-utils gettext gir1.2-adw-1 gir1.2-gtk-4.0 \
+            libglib2.0-dev meson pkgconf python3-gi python3-systemd
+      - name: Unit tests
+        run: PYTHONPATH=src:. PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -v
+      - name: Compile Python
+        run: PYTHONDONTWRITEBYTECODE=1 python3 -m compileall -q -f src tests
+      - name: Validate GSettings schema
+        run: glib-compile-schemas --strict --dry-run data
+      - name: Validate desktop metadata
+        run: |
+          desktop-file-validate data/io.github.userservicemanager.UserServiceManager.desktop
+          appstreamcli validate --no-net data/io.github.userservicemanager.UserServiceManager.metainfo.xml
+      - name: Meson build and test
+        run: |
+          meson setup build
+          meson compile -C build
+          meson test -C build --print-errorlogs

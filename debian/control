@@ -1,0 +1,28 @@
+Source: user-service-manager
+Section: utils
+Priority: optional
+Maintainer: User Service Manager Contributors <noreply@example.invalid>
+Build-Depends:
+ debhelper-compat (= 13),
+ dh-python,
+ gettext,
+ libglib2.0-dev,
+ meson,
+ pkgconf,
+ python3-all
+Standards-Version: 4.7.0
+Rules-Requires-Root: no
+
+Package: user-service-manager
+Architecture: all
+Depends:
+ gir1.2-adw-1,
+ gir1.2-gtk-4.0,
+ python3,
+ python3-gi,
+ python3-systemd,
+ ${misc:Depends},
+ ${python3:Depends}
+Description: GTK frontend for systemd user services
+ Review, register, operate, and inspect logs for explicitly selected
+ systemd user services without privilege escalation.

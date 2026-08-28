@@ -1,0 +1,201 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: user-service-manager 0.1.0\n"
+"Language: ja\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+msgid "User Service Manager"
+msgstr "ユーザーサービスマネージャー"
+
+msgid "User services"
+msgstr "ユーザーサービス"
+
+msgid "A quiet overview"
+msgstr "落ち着いた一覧"
+
+msgid "Appearance: system"
+msgstr "外観：システム設定に従う"
+
+msgid "Appearance: light"
+msgstr "外観：ライト"
+
+msgid "Appearance: dark"
+msgstr "外観：ダーク"
+
+msgid "— Take your time —"
+msgstr "〜ごゆっくりどうぞ〜"
+
+msgid "Read only"
+msgstr "表示のみ"
+
+msgid "Rescan"
+msgstr "再スキャン"
+
+msgid "Checking your services…"
+msgstr "サービスを確認しています…"
+
+msgid "Services could not be loaded"
+msgstr "サービスを読み込めませんでした"
+
+msgid "No user services were found"
+msgstr "ユーザーサービスは見つかりませんでした"
+
+msgid "Manageable"
+msgstr "管理可能"
+
+msgid "Review needed"
+msgstr "確認が必要"
+
+msgid "Remove"
+msgstr "登録解除"
+
+msgid "Add"
+msgstr "管理対象に追加"
+
+msgid "Load state"
+msgstr "読み込み状態"
+
+msgid "Service file"
+msgstr "サービスファイル"
+
+msgid "Not found"
+msgstr "見つかりません"
+
+msgid "ExecStart"
+msgstr "ExecStart"
+
+msgid "Working directory"
+msgstr "作業ディレクトリ"
+
+msgid "Safety assessment"
+msgstr "安全性の判定"
+
+msgid "Search services"
+msgstr "サービスを検索"
+
+msgid "All"
+msgstr "すべて"
+
+msgid "Running"
+msgstr "実行中"
+
+msgid "Stopped"
+msgstr "停止中"
+
+msgid "Filter services"
+msgstr "サービスを絞り込む"
+
+msgid "Reload user manager"
+msgstr "ユーザーマネージャーを再読み込み"
+
+msgid "Start"
+msgstr "開始"
+
+msgid "Stop"
+msgstr "停止"
+
+msgid "Restart"
+msgstr "再起動"
+
+msgid "Enable"
+msgstr "自動起動を有効化"
+
+msgid "Disable"
+msgstr "自動起動を無効化"
+
+msgid "Confirm service operation"
+msgstr "サービス操作の確認"
+
+msgid "The service state will be changed. Continue?"
+msgstr "サービスの状態を変更します。続けますか？"
+
+msgid "Cancel"
+msgstr "キャンセル"
+
+msgid "Continue"
+msgstr "続ける"
+
+msgid "Reload the user manager?"
+msgstr "ユーザーマネージャーを再読み込みしますか？"
+
+msgid "systemd will reread all of your user service definitions."
+msgstr "systemdがユーザーサービス定義をすべて再読み込みします。"
+
+msgid "Reload"
+msgstr "再読み込み"
+
+msgid "Operation completed"
+msgstr "操作が完了しました"
+
+msgid "User manager reloaded"
+msgstr "ユーザーマネージャーを再読み込みしました"
+
+msgid "Service logs"
+msgstr "サービスログ"
+
+msgid "Refresh logs"
+msgstr "ログを更新"
+
+msgid "Copy visible logs"
+msgstr "表示中のログをコピー"
+
+msgid "Search loaded logs"
+msgstr "読み込み済みログを検索"
+
+msgid "Load older entries"
+msgstr "過去のログをさらに読み込む"
+
+msgid "Loading logs…"
+msgstr "ログを読み込んでいます…"
+
+msgid "Logs could not be loaded"
+msgstr "ログを読み込めませんでした"
+
+msgid "No log entries"
+msgstr "ログはありません"
+
+msgid "entries shown"
+msgstr "件を表示"
+
+msgid "Visible logs copied"
+msgstr "表示中のログをコピーしました"
+
+msgid "Show logs"
+msgstr "ログを表示"
+
+msgid "Updated at {time}"
+msgstr "{time} に更新"
+
+msgid "Try again, or copy the diagnostic details."
+msgstr "もう一度試すか、診断情報をコピーしてください。"
+
+msgid "Try again"
+msgstr "もう一度試す"
+
+msgid "Copy diagnostic details"
+msgstr "診断情報をコピー"
+
+msgid "Operation failed"
+msgstr "操作に失敗しました"
+
+msgid "The requested change could not be completed."
+msgstr "要求された変更を完了できませんでした。"
+
+msgid "Close"
+msgstr "閉じる"
+
+msgid "Copy details"
+msgstr "詳細をコピー"
+
+msgid "Diagnostic details copied"
+msgstr "診断情報をコピーしました"
+
+msgid "Use Copy to copy diagnostic details"
+msgstr "コピーで診断情報を取得できます"
+
+msgid "Service inspection failed"
+msgstr "サービス情報を取得できませんでした"
+
+msgid "Copy the diagnostic details for troubleshooting."
+msgstr "問題調査のため診断情報をコピーできます。"
