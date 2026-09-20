@@ -53,6 +53,14 @@
 | TC-EDIT-004 | 構造不正、systemd検証失敗、過大ファイルを入力 | 理由付きで拒否し、対象ファイルを変更しない |
 | TC-EDIT-005 | symlink、他者所有、共有書込可能なserviceを編集 | 安全性検査で拒否し、リンク先や別ファイルを変更しない |
 | TC-UI-007 | キーボードだけで新規作成と既存編集を行い、検証失敗も確認 | 入力、バックアップ選択、確認、エラー理由へ到達できる |
+| TC-DROPIN-001 | 複数drop-inを作成・一覧・編集・削除 | `.conf`だけが名前順に表示され、各変更後にreload・再スキャンされる |
+| TC-DROPIN-002 | 不正名、構造不正、過大内容、systemd検証失敗を入力 | 保存せず理由を表示する |
+| TC-DROPIN-003 | 読込後の外部変更、symlink、共有書込可能な対象を操作 | 競合または安全性違反として拒否する |
+| TC-LIFE-001 | 停止・無効化済みserviceとdrop-in一式を削除 | 非公開バックアップが耐久化された後だけ元ファイルが削除される |
+| TC-LIFE-002 | activeまたはenabledなserviceを削除 | 事前条件を示して拒否し、ファイルを変更しない |
+| TC-LIFE-003 | missing serviceを最新バックアップから復元 | 本体とdrop-in一式が復元され、reload後に再発見される |
+| TC-LIFE-004 | 復元先にserviceまたはdrop-inを外部作成 | 既存内容を上書きせず競合として拒否する |
+| TC-UI-008 | service編集、drop-in保存・削除、service削除・復元の確認画面を操作 | 差分・検証結果・影響範囲を確認してから確定できる |
 
 ## 4. 要件追跡表
 
@@ -76,6 +84,11 @@
 | FR-020 | TC-EDIT-001, TC-EDIT-004 |
 | FR-021 | TC-EDIT-001, TC-EDIT-002 |
 | FR-022 | TC-EDIT-002 |
+| FR-023 | TC-DROPIN-001, TC-DROPIN-002, TC-DROPIN-003 |
+| FR-024 | TC-DROPIN-002, TC-UI-008 |
+| FR-025 | TC-LIFE-001, TC-LIFE-002, TC-UI-008 |
+| FR-026 | TC-LIFE-003, TC-LIFE-004, TC-UI-008 |
+| FR-027 | TC-DROPIN-001, TC-LIFE-001, TC-LIFE-003 |
 | SEC-001 | TC-OPS-001, 対象環境受入試験 |
 | SEC-002, SEC-003 | TC-SEC-001 |
 | SEC-004 | TC-OPS-004, TC-SEC-002 |
@@ -86,12 +99,17 @@
 | SEC-009 | TC-EDIT-003 |
 | SEC-010 | TC-EDIT-001, TC-EDIT-005 |
 | SEC-011 | TC-EDIT-004, アダプター単体試験 |
+| SEC-012, SEC-013 | TC-DROPIN-002, TC-DROPIN-003, TC-LIFE-001 |
+| SEC-014 | TC-DROPIN-003, TC-LIFE-001 |
+| SEC-015 | TC-LIFE-001 |
+| SEC-016 | TC-LIFE-004 |
 | UI-001, UI-002 | TC-LIST-001, TC-UI-001 |
 | UI-003 | TC-OPS-001, TC-OPS-002, TC-OPS-003 |
 | UI-004 | TC-UI-002 |
 | UI-005 | TC-UI-003, TC-UI-004, TC-I18N-002 |
 | UI-006 | TC-UI-003, TC-UI-004, TC-UI-005, TC-UI-006 |
 | UI-007 | TC-UI-007, TC-EDIT-004 |
+| UI-008, UI-009 | TC-UI-008, TC-DROPIN-001, TC-LIFE-001, TC-LIFE-003 |
 | NFR-001 | Ubuntu 26.04 LTS 対象環境受入試験 |
 | NFR-002 | TC-SEC-004, 全統合試験中の応答性測定 |
 | NFR-003 | TC-ERR-001 |
@@ -119,3 +137,11 @@
 - 検証失敗、外部競合、symlink、reload失敗が安全側に縮退
 - Ubuntu 26.04 LTSの一般ユーザーセッションで作成・編集・バックアップ・reloadを受入
 - v1.1.0を欠番とし、製品版をv1.2.0とするメタデータが一致
+
+## 8. v0.3 リリース基準
+
+- v0.1〜v0.2の既存Must要件とv0.3のFR-023〜027、SEC-012〜016、UI-008〜009に対応する試験が成功
+- drop-inの検証失敗、外部競合、symlink、削除事前条件、復元競合が安全側に縮退
+- service削除前のバックアップとdrop-in一式の復元を対象環境で通し確認
+- service・drop-inの変更前に差分とsystemd検証結果をGUIで確認可能
+- 製品版v1.3.0のメタデータが一致し、v1.1.0の欠番を維持

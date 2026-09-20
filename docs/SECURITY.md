@@ -63,3 +63,14 @@ systemd の指定子・環境展開をどこまで安全に評価できるか、
 - 一時ファイルとバックアップはmode 0600で作成し、対象の置換とディレクトリのfsyncを行う。
 - systemd検証は`/usr/bin/systemd-analyze`をshellなしの引数配列で起動し、15秒timeout、64 KiB出力上限、固定locale/PATHで実行する。`--recursive-errors=no`により検証対象自身の警告を失敗とし、他unitの無関係な警告で保存を阻害しない。user managerと現在ユーザーの解決に必要な`XDG_RUNTIME_DIR`、session bus、HOME、USER/LOGNAMEだけは許可リストで引き継ぐ。
 - 新しく作成したサービスは従来どおり明示登録するまで管理対象にならない。
+
+## 10. v0.3のdrop-in・削除・復元境界
+
+- drop-inは`~/.config/systemd/user/<canonical-unit>.d/`直下の安全な`.conf`名だけを扱う。
+- drop-inディレクトリとファイルは自己所有、非symlink、group/other書込不可を要求する。
+- drop-in保存前に構造検査、固定`/usr/bin/systemd-analyze`による隔離配置検証、リビジョン再検査を行う。
+- service削除は停止済みかつ無効化済みの、発見起点に直接配置された安全な通常ファイルだけを対象とする。
+- 削除前にservice本体、管理対象drop-in、manifestを発見起点内の隠しバックアップ領域へmode 0600で保存し、ディレクトリをmode 0700とする。
+- バックアップの書込みとfsyncが完了し、対象のリビジョンとdrop-in集合が再確認できた後だけ削除する。
+- 復元はserviceとdrop-inディレクトリのどちらも存在しない場合だけ行い、バックアップは復元後も保持する。
+- drop-in削除自体は差分確認と競合検知を行うが、個別drop-inの自動復元は対象外とする。service全体の削除バックアップにはdrop-in一式を含める。

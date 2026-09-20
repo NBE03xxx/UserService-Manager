@@ -89,7 +89,16 @@ class LocalUnitFileStore:
                 os.fsync(stream.fileno())
             if current is not None and create_backup:
                 backup = self._write_backup(origin, unit_id, current)
-            os.replace(temporary, target)
+            if current is None:
+                try:
+                    os.link(temporary, target, follow_symlinks=False)
+                except FileExistsError as error:
+                    raise EditConflictError(
+                        "A service file with this name already exists."
+                    ) from error
+                temporary.unlink()
+            else:
+                os.replace(temporary, target)
             directory_fd = os.open(origin, os.O_RDONLY | os.O_DIRECTORY)
             try:
                 os.fsync(directory_fd)

@@ -9,6 +9,7 @@ from user_service_manager.domain.editing import (
     UnitReloadError,
 )
 from user_service_manager.domain.models import UnitId, UnitRecord
+from user_service_manager.domain.lifecycle import unified_preview
 from user_service_manager.ports.commands import UnitCommandPort
 from user_service_manager.ports.editing import UnitFileStore, UnitFileVerifier
 
@@ -35,12 +36,14 @@ class UnitEditingService:
         content: str,
         expected_revision: str | None,
     ) -> PreparedUnitChange:
+        before = ""
         if expected_revision is not None:
             current = await self._store.load(unit_id)
             if current.revision != expected_revision:
                 from user_service_manager.domain.editing import EditConflictError
 
                 raise EditConflictError("The service file changed after it was loaded.")
+            before = current.content
         details = await self._verifier.verify(unit_id, content)
         return PreparedUnitChange(
             unit_id,
@@ -48,6 +51,12 @@ class UnitEditingService:
             expected_revision,
             expected_revision is None,
             details,
+            unified_preview(
+                before,
+                content,
+                "/dev/null" if expected_revision is None else f"a/{unit_id.value}",
+                f"b/{unit_id.value}",
+            ),
         )
 
     async def apply(

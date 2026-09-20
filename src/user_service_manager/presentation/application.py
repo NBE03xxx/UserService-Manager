@@ -22,6 +22,7 @@ from user_service_manager.adapters.gio_systemd_commands import GioSystemdUnitCom
 from user_service_manager.adapters.systemd_journal import SystemdJournalReader
 from user_service_manager.adapters.systemd_unit_verifier import SystemdAnalyzeUnitVerifier
 from user_service_manager.adapters.unit_file_store import LocalUnitFileStore
+from user_service_manager.adapters.unit_lifecycle_store import LocalUnitLifecycleStore
 from user_service_manager.adapters.mock_backend import MockServiceBackend
 from user_service_manager.adapters.registration_repositories import (
     GSettingsRegistrationRepository,
@@ -32,7 +33,15 @@ from user_service_manager.application.discovery_service import DiscoveryService
 from user_service_manager.application.command_service import UnitCommandService
 from user_service_manager.application.journal_service import JournalService
 from user_service_manager.application.editing_service import UnitEditingService
+from user_service_manager.application.lifecycle_service import UnitLifecycleService
 from user_service_manager.domain.editing import PreparedUnitChange, UnitFileSnapshot
+from user_service_manager.domain.lifecycle import (
+    DropInSnapshot,
+    PreparedDropInChange,
+    PreparedServiceDeletion,
+    PreparedServiceRestore,
+    unified_preview,
+)
 from user_service_manager.domain.journal import JournalEntry, JournalPage
 from user_service_manager.domain.models import (
     AccessMode,
@@ -48,6 +57,38 @@ from user_service_manager.infrastructure.preferences import AppearancePreference
 _ = gettext.gettext
 APP_ID = "io.github.NBE03xxx.UserServiceManager"
 SETTINGS_ID = APP_ID
+
+
+def preview_widget(diff: str, verification: str = "") -> Gtk.Widget:
+    box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=8)
+    if verification:
+        details = Gtk.Label(
+            label=verification,
+            xalign=0,
+            wrap=True,
+            selectable=True,
+        )
+        details.add_css_class("dim-label")
+        box.append(details)
+    buffer = Gtk.TextBuffer()
+    buffer.set_text(diff)
+    view = Gtk.TextView(
+        buffer=buffer,
+        editable=False,
+        cursor_visible=False,
+        monospace=True,
+        wrap_mode=Gtk.WrapMode.NONE,
+    )
+    view.set_left_margin(8)
+    view.set_right_margin(8)
+    view.set_top_margin(8)
+    view.set_bottom_margin(8)
+    scroller = Gtk.ScrolledWindow()
+    scroller.set_policy(Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC)
+    scroller.set_size_request(620, 230)
+    scroller.set_child(view)
+    box.append(scroller)
+    return box
 
 
 def filter_units(
@@ -463,6 +504,46 @@ class MainWindow(Adw.ApplicationWindow):
             )
             edit.connect("clicked", lambda _button: self.app.open_editor(unit.unit_id))
             row.add_suffix(edit)
+        if self.app.lifecycle is not None:
+            if unit.registration_state is RegistrationState.MISSING:
+                restore = Gtk.Button(
+                    icon_name="document-revert-symbolic",
+                    tooltip_text=_("Restore latest service backup"),
+                    valign=Gtk.Align.CENTER,
+                )
+                restore.connect(
+                    "clicked", lambda _button: self.app.prepare_service_restore(unit.unit_id)
+                )
+                row.add_suffix(restore)
+            else:
+                drop_ins = Gtk.Button(
+                    icon_name="document-properties-symbolic",
+                    tooltip_text=_("Manage drop-ins"),
+                    valign=Gtk.Align.CENTER,
+                )
+                drop_ins.connect(
+                    "clicked", lambda _button: self.app.open_drop_ins(unit.unit_id)
+                )
+                row.add_suffix(drop_ins)
+                delete_file = Gtk.Button(
+                    icon_name="user-trash-symbolic",
+                    tooltip_text=_("Back up and delete service file"),
+                    valign=Gtk.Align.CENTER,
+                )
+                delete_allowed = (
+                    unit.active_state in {ActiveState.INACTIVE, ActiveState.FAILED}
+                    and not unit.unit_file_state.startswith("enabled")
+                )
+                delete_file.set_sensitive(delete_allowed)
+                if not delete_allowed:
+                    delete_file.set_tooltip_text(
+                        _("Stop and disable the service before deleting its file")
+                    )
+                delete_file.add_css_class("destructive-action")
+                delete_file.connect(
+                    "clicked", lambda _button: self.app.prepare_service_delete(unit.unit_id)
+                )
+                row.add_suffix(delete_file)
         if unit.can_change_state and self.app.commands is not None:
             self._add_operation_row(row, unit)
         self._detail(row, _("Load state"), unit.load_state.value)
@@ -541,6 +622,7 @@ class MainWindow(Adw.ApplicationWindow):
         dialog.set_response_appearance("proceed", Adw.ResponseAppearance.DESTRUCTIVE)
         dialog.set_default_response("cancel")
         dialog.set_close_response("cancel")
+        dialog.set_extra_child(preview_widget(change.diff, change.verification_details))
         dialog.connect(
             "response",
             lambda _dialog, response: (
@@ -754,6 +836,254 @@ class UnitEditorWindow(Adw.Window):
         self.app.prepare_unit_change(self, unit_id, content, self.expected_revision)
 
 
+class DropInManagerWindow(Adw.Window):
+    def __init__(
+        self,
+        parent: MainWindow,
+        app: "UserServiceManagerApplication",
+        unit_id: UnitId,
+    ) -> None:
+        super().__init__(transient_for=parent, title=_("Drop-ins"))
+        self.app = app
+        self.unit_id = unit_id
+        self._rows: list[Gtk.Widget] = []
+        self.set_default_size(680, 480)
+
+        toolbar = Adw.ToolbarView()
+        header = Adw.HeaderBar()
+        header.set_title_widget(
+            Adw.WindowTitle(title=_("Drop-ins"), subtitle=unit_id.value)
+        )
+        add = Gtk.Button(icon_name="list-add-symbolic", tooltip_text=_("Create drop-in"))
+        add.connect("clicked", lambda _button: self.open_editor())
+        header.pack_end(add)
+        refresh = Gtk.Button(icon_name="view-refresh-symbolic", tooltip_text=_("Refresh"))
+        refresh.connect("clicked", lambda _button: self.load())
+        header.pack_start(refresh)
+        toolbar.add_top_bar(header)
+
+        outer = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12)
+        outer.set_margin_top(16)
+        outer.set_margin_bottom(16)
+        outer.set_margin_start(16)
+        outer.set_margin_end(16)
+        hint = Gtk.Label(
+            label=_(
+                "Drop-ins override selected directives without replacing the complete service file."
+            ),
+            xalign=0,
+            wrap=True,
+        )
+        hint.add_css_class("dim-label")
+        outer.append(hint)
+        self.group = Adw.PreferencesGroup(title=_("Managed drop-ins"))
+        outer.append(self.group)
+        scroller = Gtk.ScrolledWindow(vexpand=True, hexpand=True)
+        scroller.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
+        scroller.set_child(outer)
+        toolbar.set_content(scroller)
+        self.set_content(toolbar)
+
+    def load(self) -> None:
+        self._clear()
+        row = Adw.ActionRow(title=_("Loading drop-ins…"))
+        row.add_prefix(Gtk.Spinner(spinning=True))
+        self._add(row)
+        self.app.load_drop_ins(self)
+
+    def set_snapshots(self, snapshots: tuple[DropInSnapshot, ...]) -> bool:
+        self._clear()
+        if not snapshots:
+            self._add(Adw.ActionRow(title=_("No drop-ins were found")))
+            return GLib.SOURCE_REMOVE
+        for snapshot in snapshots:
+            row = Adw.ActionRow(
+                title=snapshot.name,
+                subtitle=_("Validated configuration override"),
+            )
+            edit = Gtk.Button(
+                icon_name="document-edit-symbolic",
+                tooltip_text=_("Edit drop-in"),
+                valign=Gtk.Align.CENTER,
+            )
+            edit.connect("clicked", lambda _button, item=snapshot: self.open_editor(item))
+            row.add_suffix(edit)
+            delete = Gtk.Button(
+                icon_name="user-trash-symbolic",
+                tooltip_text=_("Delete drop-in"),
+                valign=Gtk.Align.CENTER,
+            )
+            delete.add_css_class("destructive-action")
+            delete.connect(
+                "clicked", lambda _button, item=snapshot: self.confirm_delete(item)
+            )
+            row.add_suffix(delete)
+            self._add(row)
+        return GLib.SOURCE_REMOVE
+
+    def show_error(self, message: str) -> bool:
+        self._clear()
+        row = Adw.ActionRow(title=_("Drop-ins could not be loaded"), subtitle=message)
+        row.set_subtitle_selectable(True)
+        self._add(row)
+        return GLib.SOURCE_REMOVE
+
+    def open_editor(self, snapshot: DropInSnapshot | None = None) -> None:
+        editor = DropInEditorWindow(self, self.app, self.unit_id, snapshot)
+        self.app._drop_in_editors.append(editor)
+        editor.connect(
+            "close-request",
+            lambda closed, *_args: self.app._forget_drop_in_editor(closed),
+        )
+        editor.present()
+
+    def confirm_delete(self, snapshot: DropInSnapshot) -> None:
+        dialog = Adw.MessageDialog(
+            transient_for=self,
+            heading=_("Delete this drop-in?"),
+            body=_("The configuration override will be removed and the user manager reloaded."),
+        )
+        dialog.add_response("cancel", _("Cancel"))
+        dialog.add_response("delete", _("Delete"))
+        dialog.set_response_appearance("delete", Adw.ResponseAppearance.DESTRUCTIVE)
+        dialog.set_default_response("cancel")
+        dialog.set_close_response("cancel")
+        dialog.set_extra_child(
+            preview_widget(
+                unified_preview(
+                    snapshot.content,
+                    "",
+                    f"a/{self.unit_id.value}.d/{snapshot.name}",
+                    "/dev/null",
+                )
+            )
+        )
+        dialog.connect(
+            "response",
+            lambda _dialog, response: self.app.delete_drop_in(self, snapshot)
+            if response == "delete" else None,
+        )
+        dialog.present()
+
+    def _clear(self) -> None:
+        for row in self._rows:
+            self.group.remove(row)
+        self._rows.clear()
+
+    def _add(self, row: Gtk.Widget) -> None:
+        self.group.add(row)
+        self._rows.append(row)
+
+
+class DropInEditorWindow(Adw.Window):
+    DEFAULT_CONTENT = "[Service]\n"
+
+    def __init__(
+        self,
+        parent: DropInManagerWindow,
+        app: "UserServiceManagerApplication",
+        unit_id: UnitId,
+        snapshot: DropInSnapshot | None,
+    ) -> None:
+        super().__init__(transient_for=parent, modal=True, title=_("Drop-in editor"))
+        self.manager = parent
+        self.app = app
+        self.unit_id = unit_id
+        self.expected_revision = snapshot.revision if snapshot is not None else None
+        self._busy = False
+        self.set_default_size(720, 600)
+
+        toolbar = Adw.ToolbarView()
+        header = Adw.HeaderBar()
+        header.set_title_widget(Adw.WindowTitle(title=_("Drop-in editor")))
+        self.save_button = Gtk.Button(label=_("Validate and save"))
+        self.save_button.add_css_class("suggested-action")
+        self.save_button.connect("clicked", self._prepare)
+        header.pack_end(self.save_button)
+        toolbar.add_top_bar(header)
+
+        content = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12)
+        content.set_margin_top(16)
+        content.set_margin_bottom(16)
+        content.set_margin_start(16)
+        content.set_margin_end(16)
+        group = Adw.PreferencesGroup()
+        self.name = Adw.EntryRow(title=_("Drop-in name"))
+        self.name.set_text(snapshot.name if snapshot is not None else "override.conf")
+        self.name.set_sensitive(snapshot is None)
+        group.add(self.name)
+        content.append(group)
+        self.buffer = Gtk.TextBuffer()
+        self.buffer.set_text(snapshot.content if snapshot is not None else self.DEFAULT_CONTENT)
+        editor = Gtk.TextView(buffer=self.buffer, monospace=True, wrap_mode=Gtk.WrapMode.NONE)
+        editor.set_left_margin(8)
+        editor.set_right_margin(8)
+        editor.set_top_margin(8)
+        editor.set_bottom_margin(8)
+        scroller = Gtk.ScrolledWindow(vexpand=True, hexpand=True)
+        scroller.set_policy(Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC)
+        scroller.set_child(editor)
+        content.append(scroller)
+        self.status = Gtk.Label(xalign=0, wrap=True)
+        self.status.add_css_class("dim-label")
+        content.append(self.status)
+        toolbar.set_content(content)
+        self.set_content(toolbar)
+
+    def set_busy(self, busy: bool, message: str = "") -> None:
+        self._busy = busy
+        self.save_button.set_sensitive(not busy)
+        self.name.set_sensitive(not busy and self.expected_revision is None)
+        if message:
+            self.status.set_text(message)
+
+    def show_error(self, message: str) -> bool:
+        self.set_busy(False)
+        dialog = Adw.MessageDialog(
+            transient_for=self,
+            heading=_("Drop-in could not be saved"),
+            body=message,
+        )
+        dialog.add_response("close", _("Close"))
+        dialog.set_close_response("close")
+        dialog.present()
+        return GLib.SOURCE_REMOVE
+
+    def confirm(self, change: PreparedDropInChange) -> bool:
+        self.set_busy(False)
+        dialog = Adw.MessageDialog(
+            transient_for=self,
+            heading=_("Validation passed"),
+            body=_("Review the effective change before saving the drop-in."),
+        )
+        dialog.add_response("cancel", _("Cancel"))
+        dialog.add_response("save", _("Save"))
+        dialog.set_default_response("cancel")
+        dialog.set_close_response("cancel")
+        dialog.set_extra_child(preview_widget(change.diff, change.verification_details))
+        dialog.connect(
+            "response",
+            lambda _dialog, response: self.app.apply_drop_in(self, change)
+            if response == "save" else None,
+        )
+        dialog.present()
+        return GLib.SOURCE_REMOVE
+
+    def _prepare(self, _button: Gtk.Button) -> None:
+        if self._busy:
+            return
+        start = self.buffer.get_start_iter()
+        end = self.buffer.get_end_iter()
+        self.set_busy(True, _("Validating with systemd…"))
+        self.app.prepare_drop_in(
+            self,
+            self.unit_id,
+            self.name.get_text().strip(),
+            self.buffer.get_text(start, end, True),
+            self.expected_revision,
+        )
+
+
 class UserServiceManagerApplication(Adw.Application):
     def __init__(self) -> None:
         super().__init__(application_id=APP_ID)
@@ -763,9 +1093,12 @@ class UserServiceManagerApplication(Adw.Application):
         self.commands: UnitCommandService | None = None
         self.journal: JournalService | None = None
         self.editing: UnitEditingService | None = None
+        self.lifecycle: UnitLifecycleService | None = None
         self.main_window: MainWindow | None = None
         self._log_windows: list[LogWindow] = []
         self._editor_windows: list[UnitEditorWindow] = []
+        self._drop_in_windows: list[DropInManagerWindow] = []
+        self._drop_in_editors: list[DropInEditorWindow] = []
         self.appearance = AppearancePreference.SYSTEM
         self.catalog = ServiceCatalog(MockServiceBackend())
         self.use_systemd = os.environ.get("USM_BACKEND") == "systemd"
@@ -801,6 +1134,12 @@ class UserServiceManagerApplication(Adw.Application):
                 self.commands = UnitCommandService(self.discovery, command_adapter)
                 self.editing = UnitEditingService(
                     LocalUnitFileStore(),
+                    SystemdAnalyzeUnitVerifier(),
+                    command_adapter,
+                    self.discovery,
+                )
+                self.lifecycle = UnitLifecycleService(
+                    LocalUnitLifecycleStore(),
                     SystemdAnalyzeUnitVerifier(),
                     command_adapter,
                     self.discovery,
@@ -899,6 +1238,219 @@ class UserServiceManagerApplication(Adw.Application):
 
         Thread(target=worker, daemon=True).start()
 
+    def open_drop_ins(self, unit_id: UnitId) -> None:
+        if self.lifecycle is None or not isinstance(self.main_window, MainWindow):
+            return
+        window = DropInManagerWindow(self.main_window, self, unit_id)
+        self._drop_in_windows.append(window)
+        window.connect(
+            "close-request",
+            lambda closed, *_args: self._forget_drop_in_window(closed),
+        )
+        window.present()
+        window.load()
+
+    def load_drop_ins(self, window: DropInManagerWindow) -> None:
+        if self.lifecycle is None:
+            window.show_error(_("Drop-in management is not available."))
+            return
+
+        def worker() -> None:
+            try:
+                snapshots = asyncio.run(self.lifecycle.list_drop_ins(window.unit_id))
+            except Exception as error:
+                GLib.idle_add(window.show_error, str(error))
+            else:
+                GLib.idle_add(window.set_snapshots, snapshots)
+
+        Thread(target=worker, daemon=True).start()
+
+    def prepare_drop_in(
+        self,
+        window: DropInEditorWindow,
+        unit_id: UnitId,
+        name: str,
+        content: str,
+        expected_revision: str | None,
+    ) -> None:
+        if self.lifecycle is None:
+            window.show_error(_("Drop-in management is not available."))
+            return
+
+        def worker() -> None:
+            try:
+                change = asyncio.run(
+                    self.lifecycle.prepare_drop_in(
+                        unit_id, name, content, expected_revision
+                    )
+                )
+            except Exception as error:
+                GLib.idle_add(window.show_error, str(error))
+            else:
+                GLib.idle_add(window.confirm, change)
+
+        Thread(target=worker, daemon=True).start()
+
+    def apply_drop_in(
+        self,
+        window: DropInEditorWindow,
+        change: PreparedDropInChange,
+    ) -> None:
+        if self.lifecycle is None or self._busy:
+            return
+        self._busy = True
+        window.set_busy(True, _("Saving drop-in…"))
+
+        def worker() -> None:
+            try:
+                units = asyncio.run(self.lifecycle.apply_drop_in(change))
+            except Exception as error:
+                GLib.idle_add(self._drop_in_failed, window, str(error))
+            else:
+                GLib.idle_add(self._drop_in_applied, window, units)
+
+        Thread(target=worker, daemon=True).start()
+
+    def delete_drop_in(
+        self,
+        window: DropInManagerWindow,
+        snapshot: DropInSnapshot,
+    ) -> None:
+        if self.lifecycle is None or self._busy:
+            return
+        self._busy = True
+
+        def worker() -> None:
+            try:
+                units = asyncio.run(self.lifecycle.delete_drop_in(snapshot))
+            except Exception as error:
+                GLib.idle_add(self._manager_operation_failed, window, str(error))
+            else:
+                GLib.idle_add(
+                    self._manager_operation_applied,
+                    window,
+                    units,
+                    _("Drop-in deleted and user manager reloaded"),
+                )
+
+        Thread(target=worker, daemon=True).start()
+
+    def prepare_service_delete(self, unit_id: UnitId) -> None:
+        if self.lifecycle is None or self._busy:
+            return
+        self._busy = True
+
+        def worker() -> None:
+            try:
+                change = asyncio.run(self.lifecycle.prepare_delete(unit_id))
+            except Exception as error:
+                GLib.idle_add(self._lifecycle_failed, str(error))
+            else:
+                GLib.idle_add(self._confirm_service_delete, change)
+
+        Thread(target=worker, daemon=True).start()
+
+    def _confirm_service_delete(self, change: PreparedServiceDeletion) -> bool:
+        self._busy = False
+        if not isinstance(self.main_window, MainWindow):
+            return GLib.SOURCE_REMOVE
+        dialog = Adw.MessageDialog(
+            transient_for=self.main_window,
+            heading=_("Back up and delete this service file?"),
+            body=_(
+                "The service and all managed drop-ins will be copied to a private backup "
+                "before removal. The service must already be stopped and disabled."
+            ),
+        )
+        dialog.add_response("cancel", _("Cancel"))
+        dialog.add_response("delete", _("Back up and delete"))
+        dialog.set_response_appearance("delete", Adw.ResponseAppearance.DESTRUCTIVE)
+        dialog.set_default_response("cancel")
+        dialog.set_close_response("cancel")
+        dialog.set_extra_child(preview_widget(change.preview))
+        dialog.connect(
+            "response",
+            lambda _dialog, response: self._apply_service_delete(change)
+            if response == "delete" else None,
+        )
+        dialog.present()
+        return GLib.SOURCE_REMOVE
+
+    def _apply_service_delete(self, change: PreparedServiceDeletion) -> None:
+        if self.lifecycle is None or self._busy:
+            return
+        self._busy = True
+
+        def worker() -> None:
+            try:
+                units = asyncio.run(self.lifecycle.apply_delete(change))
+            except Exception as error:
+                GLib.idle_add(self._lifecycle_failed, str(error))
+            else:
+                GLib.idle_add(
+                    self._lifecycle_applied,
+                    units,
+                    _("Service backed up, deleted, and user manager reloaded"),
+                )
+
+        Thread(target=worker, daemon=True).start()
+
+    def prepare_service_restore(self, unit_id: UnitId) -> None:
+        if self.lifecycle is None or self._busy:
+            return
+        self._busy = True
+
+        def worker() -> None:
+            try:
+                change = asyncio.run(self.lifecycle.prepare_restore(unit_id))
+            except Exception as error:
+                GLib.idle_add(self._lifecycle_failed, str(error))
+            else:
+                GLib.idle_add(self._confirm_service_restore, change)
+
+        Thread(target=worker, daemon=True).start()
+
+    def _confirm_service_restore(self, change: PreparedServiceRestore) -> bool:
+        self._busy = False
+        if not isinstance(self.main_window, MainWindow):
+            return GLib.SOURCE_REMOVE
+        dialog = Adw.MessageDialog(
+            transient_for=self.main_window,
+            heading=_("Restore the latest service backup?"),
+            body=_("Existing service files are never overwritten during restoration."),
+        )
+        dialog.add_response("cancel", _("Cancel"))
+        dialog.add_response("restore", _("Restore"))
+        dialog.set_default_response("cancel")
+        dialog.set_close_response("cancel")
+        dialog.set_extra_child(preview_widget(change.preview))
+        dialog.connect(
+            "response",
+            lambda _dialog, response: self._apply_service_restore(change)
+            if response == "restore" else None,
+        )
+        dialog.present()
+        return GLib.SOURCE_REMOVE
+
+    def _apply_service_restore(self, change: PreparedServiceRestore) -> None:
+        if self.lifecycle is None or self._busy:
+            return
+        self._busy = True
+
+        def worker() -> None:
+            try:
+                units = asyncio.run(self.lifecycle.apply_restore(change))
+            except Exception as error:
+                GLib.idle_add(self._lifecycle_failed, str(error))
+            else:
+                GLib.idle_add(
+                    self._lifecycle_applied,
+                    units,
+                    _("Service restored and user manager reloaded"),
+                )
+
+        Thread(target=worker, daemon=True).start()
+
     def apply_unit_change(
         self,
         window: UnitEditorWindow,
@@ -937,9 +1489,77 @@ class UserServiceManagerApplication(Adw.Application):
         self._busy = False
         return window.show_error(message)
 
+    def _drop_in_applied(
+        self,
+        window: DropInEditorWindow,
+        units: tuple[UnitRecord, ...],
+    ) -> bool:
+        self._busy = False
+        self.units = units
+        if self.main_window is not None:
+            self.main_window.show_units(units)
+            self.main_window.notify(_("Drop-in saved and user manager reloaded"))
+        manager = window.manager
+        window.close()
+        manager.load()
+        return GLib.SOURCE_REMOVE
+
+    def _drop_in_failed(self, window: DropInEditorWindow, message: str) -> bool:
+        self._busy = False
+        return window.show_error(message)
+
+    def _manager_operation_applied(
+        self,
+        window: DropInManagerWindow,
+        units: tuple[UnitRecord, ...],
+        message: str,
+    ) -> bool:
+        self._busy = False
+        self.units = units
+        if self.main_window is not None:
+            self.main_window.show_units(units)
+            self.main_window.notify(message)
+        window.load()
+        return GLib.SOURCE_REMOVE
+
+    def _manager_operation_failed(
+        self, window: DropInManagerWindow, message: str
+    ) -> bool:
+        self._busy = False
+        window.show_error(message)
+        return GLib.SOURCE_REMOVE
+
+    def _lifecycle_applied(
+        self,
+        units: tuple[UnitRecord, ...],
+        message: str,
+    ) -> bool:
+        self._busy = False
+        self.units = units
+        if self.main_window is not None:
+            self.main_window.show_units(units)
+            self.main_window.notify(message)
+        return GLib.SOURCE_REMOVE
+
+    def _lifecycle_failed(self, message: str) -> bool:
+        self._busy = False
+        if self.main_window is not None:
+            self.main_window.show_operation_error(message)
+        return GLib.SOURCE_REMOVE
+
     def _forget_editor_window(self, window: UnitEditorWindow) -> bool:
         if window in self._editor_windows:
             self._editor_windows.remove(window)
+        return False
+
+    def _forget_drop_in_window(self, window: DropInManagerWindow) -> bool:
+        if window in self._drop_in_windows:
+            self._drop_in_windows.remove(window)
+        return False
+
+    def _forget_drop_in_editor(self, window: DropInEditorWindow) -> bool:
+        if window in self._drop_in_editors:
+            self._drop_in_editors.remove(window)
         return False
 
     def _forget_log_window(self, window: LogWindow) -> bool:

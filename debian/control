@@ -24,5 +24,5 @@ Depends:
  ${misc:Depends},
  ${python3:Depends}
 Description: GTK frontend for systemd user services
- Review, create, safely edit, operate, and inspect logs for systemd user
- services without privilege escalation.
+ Review, create, safely edit, operate, inspect logs, manage drop-ins, and
+ back up or restore systemd user services without privilege escalation.

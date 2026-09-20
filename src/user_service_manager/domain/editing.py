@@ -82,3 +82,4 @@ class PreparedUnitChange:
     expected_revision: str | None
     creating: bool
     verification_details: str
+    diff: str

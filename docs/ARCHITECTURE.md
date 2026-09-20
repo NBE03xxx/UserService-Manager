@@ -12,7 +12,8 @@ GTK Presentation
 Application Services
     ├─ Discovery & Registration
     ├─ Status & Operations
-　　├─ Unit File Editing & Validation
+    ├─ Unit File Editing & Validation
+    ├─ Drop-in & Reversible Lifecycle
     └─ Log Query
     ↓ ports
 Domain
@@ -40,6 +41,8 @@ UI から `systemctl` や `journalctl` を直接呼ばない。systemd 接続は
 | UnitEditingService | 原本読込、事前検証、競合検出、保存、reload、再スキャンの統括 |
 | UnitFileStore | 直接配置された通常ファイルの安全な読書きと明示バックアップ |
 | UnitFileVerifier | 基本構造検査と`systemd-analyze --user verify`によるステージ済み内容の検証 |
+| UnitLifecycleService | drop-in管理、削除事前条件、バックアップ、復元、reloadの統括 |
+| UnitLifecycleStore | drop-inの原子的保存と、service一式の非公開バックアップ・非上書き復元 |
 
 ## 4. データモデル
 
@@ -115,3 +118,12 @@ XDG のユーザー設定領域を使い、原子的置換で保存する。設�
 5. 利用者に保存内容とバックアップ選択を確認する。
 6. 保存直前に所有者、file type、mode、リビジョンを再検査し、同一ディレクトリ内のmode 0600一時ファイルから原子的に置換する。
 7. 保存後にuser managerをreloadして再スキャンする。reload失敗時は保存済みと明示し、成功と誤認させない。
+
+## 11. drop-in・削除・復元
+
+1. drop-inは`<unit>.d`直下のcanonical `.conf`名に限定し、複数を独立したリビジョンで扱う。
+2. drop-inを隔離したservice配置へステージし、systemd検証とunified diff生成後に利用者へ確認する。
+3. 保存・削除直前に対象リビジョンを再検査し、完了後にreload・再スキャンする。
+4. service削除前に最新状態、inactive/failed、非enabled、直接配置通常ファイルであることを再確認する。
+5. service本体、drop-in、manifestを`.user-service-manager-backups/<unit>/<backup-id>/`へ耐久化してから元ファイルを削除する。
+6. missing状態から最新バックアップを復元する。復元先にserviceまたはdrop-inディレクトリがあれば中止し、マージや上書きを行わない。

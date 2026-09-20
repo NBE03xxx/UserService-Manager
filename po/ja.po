@@ -262,3 +262,105 @@ msgstr "サービスファイルを保存しています…"
 
 msgid "Service file saved and user manager reloaded"
 msgstr "サービスファイルを保存し、ユーザーマネージャーを再読み込みしました"
+
+msgid "Restore latest service backup"
+msgstr "最新のサービスバックアップを復元"
+
+msgid "Manage drop-ins"
+msgstr "drop-inを管理"
+
+msgid "Back up and delete service file"
+msgstr "バックアップしてサービスファイルを削除"
+
+msgid "Drop-ins"
+msgstr "drop-in"
+
+msgid "Create drop-in"
+msgstr "drop-inを作成"
+
+msgid "Refresh"
+msgstr "更新"
+
+msgid "Drop-ins override selected directives without replacing the complete service file."
+msgstr "drop-inを使うと、サービスファイル全体を置き換えずに選択した設定を上書きできます。"
+
+msgid "Managed drop-ins"
+msgstr "管理対象のdrop-in"
+
+msgid "Loading drop-ins…"
+msgstr "drop-inを読み込んでいます…"
+
+msgid "No drop-ins were found"
+msgstr "drop-inは見つかりませんでした"
+
+msgid "Validated configuration override"
+msgstr "検証対象の設定上書き"
+
+msgid "Edit drop-in"
+msgstr "drop-inを編集"
+
+msgid "Delete drop-in"
+msgstr "drop-inを削除"
+
+msgid "Drop-ins could not be loaded"
+msgstr "drop-inを読み込めませんでした"
+
+msgid "Delete this drop-in?"
+msgstr "このdrop-inを削除しますか？"
+
+msgid "The configuration override will be removed and the user manager reloaded."
+msgstr "設定の上書きを削除し、ユーザーマネージャーを再読み込みします。"
+
+msgid "Delete"
+msgstr "削除"
+
+msgid "Drop-in editor"
+msgstr "drop-inエディター"
+
+msgid "Drop-in name"
+msgstr "drop-in名"
+
+msgid "Drop-in could not be saved"
+msgstr "drop-inを保存できませんでした"
+
+msgid "Review the effective change before saving the drop-in."
+msgstr "drop-inを保存する前に実際の変更内容を確認してください。"
+
+msgid "Drop-in management is not available."
+msgstr "drop-in管理は利用できません。"
+
+msgid "Saving drop-in…"
+msgstr "drop-inを保存しています…"
+
+msgid "Drop-in deleted and user manager reloaded"
+msgstr "drop-inを削除し、ユーザーマネージャーを再読み込みしました"
+
+msgid "Back up and delete this service file?"
+msgstr "このサービスファイルをバックアップして削除しますか？"
+
+msgid "Stop and disable the service before deleting its file"
+msgstr "サービスファイルを削除する前にサービスを停止し、無効化してください"
+
+msgid "The service and all managed drop-ins will be copied to a private backup before removal. The service must already be stopped and disabled."
+msgstr "サービスと管理対象のdrop-inを非公開バックアップへコピーしてから削除します。サービスは事前に停止し、無効化してください。"
+
+msgid "Back up and delete"
+msgstr "バックアップして削除"
+
+msgid "Service backed up, deleted, and user manager reloaded"
+msgstr "サービスをバックアップして削除し、ユーザーマネージャーを再読み込みしました"
+
+msgid "Restore the latest service backup?"
+msgstr "最新のサービスバックアップを復元しますか？"
+
+msgid "Existing service files are never overwritten during restoration."
+msgstr "復元時に既存のサービスファイルを上書きすることはありません。"
+
+msgid "Restore"
+msgstr "復元"
+
+msgid "Service restored and user manager reloaded"
+msgstr "サービスを復元し、ユーザーマネージャーを再読み込みしました"
+
+msgid "Drop-in saved and user manager reloaded"
+msgstr "drop-inを保存し、ユーザーマネージャーを再読み込みしました"

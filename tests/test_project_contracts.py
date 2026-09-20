@@ -85,8 +85,8 @@ class ProjectContractTests(unittest.TestCase):
             "https://github.com/NBE03xxx/UserService-Manager",
         )
 
-    def test_release_version_is_consistently_1_2_0(self) -> None:
-        version = "1.2.0"
+    def test_release_version_is_consistently_1_3_0(self) -> None:
+        version = "1.3.0"
         project = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))
         self.assertEqual(project["project"]["version"], version)
         self.assertIn(f"version: '{version}'", MESON.read_text(encoding="utf-8"))

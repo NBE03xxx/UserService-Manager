@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 import tempfile
 import unittest
@@ -120,6 +121,21 @@ class LocalUnitFileStoreTests(unittest.TestCase):
         with self.assertRaises(EditConflictError):
             asyncio.run(self.store.save(UNIT_ID, VALID, None, False))
 
+    def test_concurrent_create_never_overwrites(self) -> None:
+        def attempt(content: str) -> str:
+            try:
+                asyncio.run(self.store.save(UNIT_ID, content, None, False))
+                return "saved"
+            except EditConflictError:
+                return "conflict"
+
+        first = VALID.replace("Example", "First")
+        second = VALID.replace("Example", "Second")
+        with ThreadPoolExecutor(max_workers=2) as pool:
+            results = tuple(pool.map(attempt, (first, second)))
+        self.assertCountEqual(results, ("saved", "conflict"))
+        self.assertIn(asyncio.run(self.store.load(UNIT_ID)).content, {first, second})
+
     def test_new_file_refuses_meaningless_backup_request(self) -> None:
         with self.assertRaises(UnitContentError):
             asyncio.run(self.store.save(UNIT_ID, VALID, None, True))
@@ -190,12 +206,14 @@ class UnitEditingServiceTests(unittest.TestCase):
         discovery = FakeDiscovery()
         service = UnitEditingService(store, verifier, commands, discovery)  # type: ignore[arg-type]
 
-        prepared = asyncio.run(service.prepare(UNIT_ID, VALID, "revision"))
+        changed = VALID.replace("Example", "Changed")
+        prepared = asyncio.run(service.prepare(UNIT_ID, changed, "revision"))
         result = asyncio.run(service.apply(prepared, True))
 
         self.assertEqual(prepared.verification_details, "verified")
-        self.assertEqual(verifier.calls, [(UNIT_ID, VALID)])
-        self.assertEqual(store.saved, [(UNIT_ID, VALID, "revision", True)])
+        self.assertIn("--- a/example.service", prepared.diff)
+        self.assertEqual(verifier.calls, [(UNIT_ID, changed)])
+        self.assertEqual(store.saved, [(UNIT_ID, changed, "revision", True)])
         self.assertEqual(commands.reloads, 1)
         self.assertEqual(discovery.scans, 1)
         self.assertEqual(result, ())

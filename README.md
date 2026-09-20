@@ -5,19 +5,20 @@ Ubuntu/GNOME/Wayland 上で、一般ユーザーが `systemd --user` のユー�
 - GitHub: https://github.com/NBE03xxx/UserService-Manager
 - License: [MIT](LICENSE)
 
-## v1.2.0 の機能範囲
+## v1.3.0 の機能範囲
 
 - 対象ユニット: `.service` のみ
 - 発見起点: `~/.config/systemd/user/`
 - 管理方法: 発見したサービスをユーザーが明示的に管理対象へ登録
 - 主機能: 一覧、状態確認、start/stop/restart、enable/disable、status、daemon-reload、journal ログ表示
 - ファイル: `.service` の新規作成、元ファイル編集、systemd事前検証、明示選択によるバックアップ
+- ライフサイクル: 複数drop-in管理、保存前差分、バックアップ付きservice削除、最新バックアップ復元
 - 権限: 一般ユーザー権限のみ（`sudo`、Polkit による昇格なし）
 - UI: GTK 系、GNOME/Wayland を優先
 - 言語: locale により日本語/英語を自動選択
 - 外観: 初期状態ではシステム設定に従い、ライト／ダークを手動選択可能
 
-ユーザー領域外を参照するサービスは、状態・詳細・ログのみ閲覧可能です。状態変更ボタンは無効化します。ファイル編集は発見起点に直接配置された安全な通常ファイルに限定し、symlink、削除、drop-in管理は対象外です。
+ユーザー領域外を参照するサービスは、状態・詳細・ログのみ閲覧可能です。状態変更ボタンは無効化します。ファイル編集・削除は発見起点に直接配置された安全な通常ファイルに限定し、symlink先は変更しません。drop-inは対応する`.service.d/`直下の安全な`.conf`だけを管理します。
 
 ただし、Ubuntu が提供・管理する `/usr/bin/python3` 等の信頼できるシステム実行基盤は、単にホーム外にあるという理由だけでは表示専用にしません。実際のユーザーワークロードや設定ファイルの所在を区別して判定します。
 
@@ -47,21 +48,22 @@ Ubuntu/GNOME/Wayland 上で、一般ユーザーが `systemd --user` のユー�
 | [ACCEPTANCE_CHECKLIST.md](docs/ACCEPTANCE_CHECKLIST.md) | v0.1統合受入項目と実施状況 |
 | [RELEASE_READINESS.md](docs/RELEASE_READINESS.md) | リリース判定、完了証跡、残課題 |
 | [V0_2_RESULTS.md](docs/V0_2_RESULTS.md) | v0.2の作成・編集機能とv1.2.0受入の結果 |
+| [V0_3_RESULTS.md](docs/V0_3_RESULTS.md) | v0.3のdrop-in・ライフサイクル機能とv1.3.0受入の結果 |
 
 開発者向けの現在の実行・検証方法は [DEVELOPMENT.md](DEVELOPMENT.md) を参照してください。
 
 ## 現在の実装状態
 
-従来の閲覧・操作機能に加え、v0.2の作成・編集の安全基盤をv1.2.0として実装しました。v1.1.0は誤用のため欠番とし、再利用しません。
+従来機能とv0.2の作成・編集に加え、v0.3のdrop-in管理、変更プレビュー、復元可能なservice削除をv1.3.0として実装しました。v1.1.0は誤用のため欠番とし、再利用しません。
 
-文書内の v0.1〜v0.4 は機能範囲のロードマップ番号です。v0.1の範囲は製品版 v1.0.0、v0.2の範囲はv1.2.0に対応します。
+文書内の v0.1〜v0.4 は機能範囲のロードマップ番号です。v0.1は製品版v1.0.0、v0.2はv1.2.0、v0.3はv1.3.0に対応します。
 
 ## インストール
 
-[GitHub Releases](https://github.com/NBE03xxx/UserService-Manager/releases/latest) から `user-service-manager_1.2.0_all.deb` をダウンロードし、ファイルのあるディレクトリで次を実行します。
+v1.3.0のGitHub Release公開後、[GitHub Releases](https://github.com/NBE03xxx/UserService-Manager/releases/latest) から `user-service-manager_1.3.0_all.deb` をダウンロードし、ファイルのあるディレクトリで次を実行します。公開前の検証用packageはリリース準備文書に記載したchecksumと照合してください。
 
 ```bash
-sudo apt install ./user-service-manager_1.2.0_all.deb
+sudo apt install ./user-service-manager_1.3.0_all.deb
 ```
 
 インストール後はGNOMEのアプリ一覧から「ユーザーサービスマネージャー」を起動できます。アンインストールは次のコマンドで行います。
