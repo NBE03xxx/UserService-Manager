@@ -2,7 +2,9 @@
 
 ## 現在の段階
 
-v1.0.0の実装と統合・配布検証は完了しています。ソースからの開発起動は安全なmock backendを使用します。`USM_BACKEND=systemd`で実状態とjournalの読み取りを接続し、変更操作はさらに`USM_COMMANDS=enabled`を明示した場合だけ接続されます。インストール済みの`user-service-manager`ランチャーは製品用として両方を有効にしますが、すべての変更操作に登録・path policy・操作直前再評価の安全ゲートが適用されます。
+v1.0.1の実装、統合・配布検証、GitHub Releaseへの公開は完了しています。次の開発対象は、`docs/ROADMAP.md`で機能段階として定義した v0.2（作成・編集の安全基盤）です。
+
+ソースからの開発起動は安全なmock backendを使用します。`USM_BACKEND=systemd`で実状態とjournalの読み取りを接続し、変更操作はさらに`USM_COMMANDS=enabled`を明示した場合だけ接続されます。インストール済みの`user-service-manager`ランチャーは製品用として両方を有効にしますが、すべての変更操作に登録・path policy・操作直前再評価の安全ゲートが適用されます。
 
 ## Ubuntu 26.04で想定する開発依存
 

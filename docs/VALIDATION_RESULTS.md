@@ -1,5 +1,7 @@
 # Ubuntu 26.04 実機検証結果
 
+> この文書は技術スパイクから段階的に実施した検証の時系列記録である。文中の「未完了」「Blocked」は各中間時点の状態を示し、後続フェーズで解消済み。最終判定は `PHASE6_RESULTS.md` と `RELEASE_READINESS.md` を正とする。
+
 開始日: 2026-08-26  
 対象環境: Ubuntu 26.04 LTS、GNOME 50.1、Wayland  
 状態: 技術スパイク実機検証完了（Pass with documented limitations）

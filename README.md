@@ -52,6 +52,8 @@ Ubuntu/GNOME/Wayland 上で、一般ユーザーが `systemd --user` のユー�
 
 フェーズ1からフェーズ6まで完了しました。発見、登録、missing保持、詳細取得、安全性判定、変更操作、journal表示、国際化、外観、アクセシビリティ、`.deb`のインストール往復をUbuntu 26.04 LTSで確認済みです。詳細は `docs/RELEASE_READINESS.md` を参照してください。
 
+文書内の v0.1〜v0.4 は機能範囲のロードマップ番号です。v0.1の範囲は製品版 v1.0.0 で公開し、現在の最新版は v1.0.1、次の開発対象はv0.2です。
+
 ## インストール
 
 [GitHub Releases](https://github.com/NBE03xxx/UserService-Manager/releases/latest) から `user-service-manager_1.0.1_all.deb` をダウンロードし、ファイルのあるディレクトリで次を実行します。

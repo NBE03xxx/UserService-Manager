@@ -1,4 +1,6 @@
-# v0.1 実装計画
+# v0.1 実装計画（完了）
+
+> 本文書の v0.1 は初期機能範囲の名称であり、製品版 v1.0.0 として公開され、その後 v1.0.1 へ更新された。現在のリリース状況は `RELEASE_READINESS.md` を正とする。
 
 ## 1. 前提
 
@@ -126,7 +128,7 @@
 
 **完了ゲート:** `TEST_PLAN.md` の v0.1 リリース基準を全て満たす。
 
-**状態:** 実装受入を進行中。要件追跡、自動テスト49件、metadata、日英UI受入は完了。package build、縮退環境、アクセシビリティ実機試験が未完了のため、配布リリースは未承認。詳細は `ACCEPTANCE_CHECKLIST.md` と `RELEASE_READINESS.md`。
+**状態:** 2026-08-28完了。要件追跡、metadata、日英UI、package build、縮退環境、アクセシビリティの実機試験を完了し、配布リリースを承認した。v1.0.0のリリース時は自動テスト50件、v1.0.1では52件が成功している。v1.0.1のタグ、`.deb`、SHA-256 checksumはGitHub Releaseで公開済み。詳細は `ACCEPTANCE_CHECKLIST.md` と `RELEASE_READINESS.md`。
 
 ## 9. 推奨実装順序と依存関係
 

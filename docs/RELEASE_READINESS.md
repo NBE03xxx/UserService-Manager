@@ -41,10 +41,11 @@ FR-015の追加管理範囲UIはShould要件であり、v0.1では既知の制�
 - 日本語・英語を分離した通常セッション用ランチャー
 - 統合受入チェックリスト
 
-## 公開手順
+## 公開状況
 
-1. `v1.0.1` tagを正式版commitへ付与する。
-2. GitHub Releaseへ`.deb`とSHA-256 checksumを添付する。
+- `v1.0.1` tagを正式版commit `200010a` へ付与済み。
+- GitHub Release `User Service Manager v1.0.1` を2026-08-28に公開済み。
+- `user-service-manager_1.0.1_all.deb` とSHA-256 checksumを添付済み。
 
 ## 縮退時の外観制約
 
