@@ -47,6 +47,12 @@
 | TC-I18N-001 | 日本語、英語、未対応 locale で起動 | 日本語、英語、英語フォールバックとなる |
 | TC-I18N-002 | 翻訳カタログと疑似翻訳を検査 | 未翻訳・変数不整合・重大なレイアウト崩れがない |
 | TC-ARCH-001 | mock backend と追加 unit type を試作 | UI が systemd CLI へ直接依存せず能力追加できる |
+| TC-EDIT-001 | 新しいcanonical service名と検証済み内容を保存 | 発見起点にmode 0600の通常ファイルが原子的に作成され、reload後に発見される |
+| TC-EDIT-002 | 既存serviceを読み込み、バックアップを選択して保存 | 元内容のバックアップを作成し、対象だけを更新してreload・再スキャンする |
+| TC-EDIT-003 | 読込後に外部からserviceを変更 | リビジョン不一致で保存を拒否し、外部変更を上書きしない |
+| TC-EDIT-004 | 構造不正、systemd検証失敗、過大ファイルを入力 | 理由付きで拒否し、対象ファイルを変更しない |
+| TC-EDIT-005 | symlink、他者所有、共有書込可能なserviceを編集 | 安全性検査で拒否し、リンク先や別ファイルを変更しない |
+| TC-UI-007 | キーボードだけで新規作成と既存編集を行い、検証失敗も確認 | 入力、バックアップ選択、確認、エラー理由へ到達できる |
 
 ## 4. 要件追跡表
 
@@ -65,17 +71,27 @@
 | FR-015 | TC-PATH-004 |
 | FR-016 | TC-ERR-001 |
 | FR-017 | TC-OPS-001, TC-OPS-004 |
+| FR-018 | TC-EDIT-001, TC-EDIT-004 |
+| FR-019 | TC-EDIT-002, TC-EDIT-005 |
+| FR-020 | TC-EDIT-001, TC-EDIT-004 |
+| FR-021 | TC-EDIT-001, TC-EDIT-002 |
+| FR-022 | TC-EDIT-002 |
 | SEC-001 | TC-OPS-001, 対象環境受入試験 |
 | SEC-002, SEC-003 | TC-SEC-001 |
 | SEC-004 | TC-OPS-004, TC-SEC-002 |
 | SEC-005 | TC-PATH-002, TC-UI-001 |
 | SEC-006 | TC-SEC-003 |
 | SEC-007 | TC-INFO-001, TC-LOG-001 |
+| SEC-008 | TC-EDIT-001, TC-EDIT-002 |
+| SEC-009 | TC-EDIT-003 |
+| SEC-010 | TC-EDIT-001, TC-EDIT-005 |
+| SEC-011 | TC-EDIT-004, アダプター単体試験 |
 | UI-001, UI-002 | TC-LIST-001, TC-UI-001 |
 | UI-003 | TC-OPS-001, TC-OPS-002, TC-OPS-003 |
 | UI-004 | TC-UI-002 |
 | UI-005 | TC-UI-003, TC-UI-004, TC-I18N-002 |
 | UI-006 | TC-UI-003, TC-UI-004, TC-UI-005, TC-UI-006 |
+| UI-007 | TC-UI-007, TC-EDIT-004 |
 | NFR-001 | Ubuntu 26.04 LTS 対象環境受入試験 |
 | NFR-002 | TC-SEC-004, 全統合試験中の応答性測定 |
 | NFR-003 | TC-ERR-001 |
@@ -96,3 +112,10 @@
 ## 6. テスト証跡
 
 将来の実装リポジトリでは、テスト結果にアプリ版、OS、GNOME、systemd、locale、実行日時、テストケース ID を保存する。失敗は要件 ID と紐付け、仕様変更なら該当文書も同時更新する。
+
+## 7. v0.2 リリース基準
+
+- v0.1の既存Must要件とv0.2のFR-018〜022、SEC-008〜011、UI-007に対応する試験が成功
+- 検証失敗、外部競合、symlink、reload失敗が安全側に縮退
+- Ubuntu 26.04 LTSの一般ユーザーセッションで作成・編集・バックアップ・reloadを受入
+- v1.1.0を欠番とし、製品版をv1.2.0とするメタデータが一致

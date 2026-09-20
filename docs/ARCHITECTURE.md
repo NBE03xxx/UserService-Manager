@@ -12,6 +12,7 @@ GTK Presentation
 Application Services
     ├─ Discovery & Registration
     ├─ Status & Operations
+　　├─ Unit File Editing & Validation
     └─ Log Query
     ↓ ports
 Domain
@@ -36,6 +37,9 @@ UI から `systemctl` や `journalctl` を直接呼ばない。systemd 接続は
 | JournalQueryService | unit 条件付き journal 読取、ページング、キャンセル |
 | SettingsRepository | スキーマ付き設定、登録 ID、補助範囲の保存 |
 | I18nService | locale 判定、翻訳カタログ選択 |
+| UnitEditingService | 原本読込、事前検証、競合検出、保存、reload、再スキャンの統括 |
+| UnitFileStore | 直接配置された通常ファイルの安全な読書きと明示バックアップ |
+| UnitFileVerifier | 基本構造検査と`systemd-analyze --user verify`によるステージ済み内容の検証 |
 
 ## 4. データモデル
 
@@ -101,3 +105,13 @@ user unitのmatchは、service process側の `_SYSTEMD_USER_UNIT` とuser manage
 ## 9. 永続化
 
 XDG のユーザー設定領域を使い、原子的置換で保存する。設定には `schema_version` を持たせる。外観設定の初期値は `system` とし、GNOME/GTK が通知するシステム外観の変更へ追従する。`light` または `dark` の手動指定時はシステム設定より優先し、再起動後も保持する。登録情報はキャッシュであり権限根拠ではない。破損時は退避・初期化を案内し、外部入力として検証する。
+
+## 10. サービスファイル作成・編集
+
+1. 作成時はcanonical `.service` 名、編集時は発見起点直下の通常ファイルだけを受け付ける。
+2. 編集時は元内容のSHA-256リビジョンを保持する。
+3. UTF-8、256 KiB上限、ディレクティブ形式、`[Service]`セクションをアプリ側で検査する。
+4. 隔離一時ディレクトリの同名ファイルを`systemd-analyze --user verify`で検証する。
+5. 利用者に保存内容とバックアップ選択を確認する。
+6. 保存直前に所有者、file type、mode、リビジョンを再検査し、同一ディレクトリ内のmode 0600一時ファイルから原子的に置換する。
+7. 保存後にuser managerをreloadして再スキャンする。reload失敗時は保存済みと明示し、成功と誤認させない。

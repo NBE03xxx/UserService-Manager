@@ -20,6 +20,8 @@ from user_service_manager.adapters.filesystem_scanner import UserUnitFileScanner
 from user_service_manager.adapters.gio_systemd_query import GioSystemdUnitQuery
 from user_service_manager.adapters.gio_systemd_commands import GioSystemdUnitCommands
 from user_service_manager.adapters.systemd_journal import SystemdJournalReader
+from user_service_manager.adapters.systemd_unit_verifier import SystemdAnalyzeUnitVerifier
+from user_service_manager.adapters.unit_file_store import LocalUnitFileStore
 from user_service_manager.adapters.mock_backend import MockServiceBackend
 from user_service_manager.adapters.registration_repositories import (
     GSettingsRegistrationRepository,
@@ -29,6 +31,8 @@ from user_service_manager.application.catalog import ServiceCatalog
 from user_service_manager.application.discovery_service import DiscoveryService
 from user_service_manager.application.command_service import UnitCommandService
 from user_service_manager.application.journal_service import JournalService
+from user_service_manager.application.editing_service import UnitEditingService
+from user_service_manager.domain.editing import PreparedUnitChange, UnitFileSnapshot
 from user_service_manager.domain.journal import JournalEntry, JournalPage
 from user_service_manager.domain.models import (
     AccessMode,
@@ -290,6 +294,13 @@ class MainWindow(Adw.ApplicationWindow):
         refresh = Gtk.Button(icon_name="view-refresh-symbolic", tooltip_text=_("Rescan"))
         refresh.connect("clicked", lambda _button: self.app.reload_units())
         header.pack_start(refresh)
+        if app.editing is not None:
+            create = Gtk.Button(
+                icon_name="list-add-symbolic",
+                tooltip_text=_("Create a service file"),
+            )
+            create.set_action_name("app.new-service")
+            header.pack_start(create)
         if app.commands is not None:
             reload_manager = Gtk.Button(
                 icon_name="emblem-synchronizing-symbolic",
@@ -441,6 +452,17 @@ class MainWindow(Adw.ApplicationWindow):
                 "clicked", lambda _button: self.app.open_logs(unit.unit_id)
             )
             row.add_suffix(logs)
+        if (
+            self.app.editing is not None
+            and unit.registration_state is not RegistrationState.MISSING
+        ):
+            edit = Gtk.Button(
+                icon_name="document-edit-symbolic",
+                tooltip_text=_("Edit service file"),
+                valign=Gtk.Align.CENTER,
+            )
+            edit.connect("clicked", lambda _button: self.app.open_editor(unit.unit_id))
+            row.add_suffix(edit)
         if unit.can_change_state and self.app.commands is not None:
             self._add_operation_row(row, unit)
         self._detail(row, _("Load state"), unit.load_state.value)
@@ -588,6 +610,150 @@ class MainWindow(Adw.ApplicationWindow):
         self.add_css_class("coffee-dark" if dark else "coffee-light")
 
 
+class UnitEditorWindow(Adw.Window):
+    DEFAULT_CONTENT = (
+        "[Unit]\nDescription=\n\n[Service]\nExecStart=\n\n"
+        "[Install]\nWantedBy=default.target\n"
+    )
+
+    def __init__(
+        self,
+        parent: MainWindow,
+        app: "UserServiceManagerApplication",
+        unit_id: UnitId | None,
+    ) -> None:
+        super().__init__(transient_for=parent, modal=True, title=_("Service file editor"))
+        self.app = app
+        self.unit_id = unit_id
+        self.expected_revision: str | None = None
+        self._busy = False
+        self.set_default_size(760, 660)
+
+        toolbar = Adw.ToolbarView()
+        header = Adw.HeaderBar()
+        header.set_title_widget(Adw.WindowTitle(title=_("Service file editor")))
+        self.save_button = Gtk.Button(label=_("Validate and save"))
+        self.save_button.add_css_class("suggested-action")
+        self.save_button.connect("clicked", self._prepare)
+        header.pack_end(self.save_button)
+        toolbar.add_top_bar(header)
+
+        content = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12)
+        content.set_margin_top(16)
+        content.set_margin_bottom(16)
+        content.set_margin_start(16)
+        content.set_margin_end(16)
+
+        group = Adw.PreferencesGroup()
+        self.name = Adw.EntryRow(title=_("Service name"))
+        self.name.set_text(unit_id.value if unit_id is not None else "")
+        self.name.set_sensitive(unit_id is None)
+        group.add(self.name)
+        content.append(group)
+
+        hint = Gtk.Label(
+            label=_(
+                "Edit the complete systemd user service definition. "
+                "Changes are checked before saving."
+            ),
+            xalign=0,
+            wrap=True,
+        )
+        hint.add_css_class("dim-label")
+        content.append(hint)
+
+        self.buffer = Gtk.TextBuffer()
+        self.buffer.set_text(self.DEFAULT_CONTENT if unit_id is None else "")
+        editor = Gtk.TextView(buffer=self.buffer, monospace=True, wrap_mode=Gtk.WrapMode.NONE)
+        editor.set_left_margin(8)
+        editor.set_right_margin(8)
+        editor.set_top_margin(8)
+        editor.set_bottom_margin(8)
+        scroller = Gtk.ScrolledWindow(vexpand=True, hexpand=True)
+        scroller.set_policy(Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC)
+        scroller.set_child(editor)
+        content.append(scroller)
+
+        self.backup = Gtk.CheckButton(label=_("Create a backup of the current file"))
+        self.backup.set_active(unit_id is not None)
+        self.backup.set_visible(unit_id is not None)
+        content.append(self.backup)
+        self.status = Gtk.Label(xalign=0, wrap=True)
+        self.status.add_css_class("dim-label")
+        content.append(self.status)
+        toolbar.set_content(content)
+        self.set_content(toolbar)
+
+    def set_snapshot(self, snapshot: UnitFileSnapshot) -> bool:
+        self.expected_revision = snapshot.revision
+        self.buffer.set_text(snapshot.content)
+        self.set_busy(False)
+        self.status.set_text(_("Ready to edit"))
+        return GLib.SOURCE_REMOVE
+
+    def set_busy(self, busy: bool, message: str = "") -> None:
+        self._busy = busy
+        self.save_button.set_sensitive(not busy)
+        self.name.set_sensitive(not busy and self.unit_id is None)
+        self.backup.set_sensitive(not busy)
+        if message:
+            self.status.set_text(message)
+
+    def show_error(self, diagnostic: str) -> bool:
+        self.set_busy(False)
+        dialog = Adw.MessageDialog(
+            transient_for=self,
+            heading=_("Service file could not be saved"),
+            body=diagnostic,
+        )
+        dialog.add_response("close", _("Close"))
+        dialog.set_close_response("close")
+        dialog.present()
+        return GLib.SOURCE_REMOVE
+
+    def confirm(self, change: PreparedUnitChange) -> bool:
+        self.set_busy(False)
+        action = _("create") if change.creating else _("replace")
+        backup_note = (
+            _(" A timestamped backup will be created.")
+            if self.backup.get_active() and not change.creating else ""
+        )
+        dialog = Adw.MessageDialog(
+            transient_for=self,
+            heading=_("Validation passed"),
+            body=_("The app will {action} {name} and reload the user manager.").format(
+                action=action,
+                name=change.unit_id.value,
+            ) + backup_note,
+        )
+        dialog.add_response("cancel", _("Cancel"))
+        dialog.add_response("save", _("Save"))
+        dialog.set_default_response("cancel")
+        dialog.set_close_response("cancel")
+        dialog.connect(
+            "response",
+            lambda _dialog, response: self.app.apply_unit_change(
+                self, change, self.backup.get_active()
+            ) if response == "save" else None,
+        )
+        dialog.present()
+        return GLib.SOURCE_REMOVE
+
+    def _prepare(self, _button: Gtk.Button) -> None:
+        if self._busy:
+            return
+        try:
+            unit_id = self.unit_id or UnitId(self.name.get_text().strip())
+        except ValueError as error:
+            self.show_error(str(error))
+            return
+        start = self.buffer.get_start_iter()
+        end = self.buffer.get_end_iter()
+        content = self.buffer.get_text(start, end, True)
+        self.set_busy(True, _("Validating with systemd…"))
+        self.app.prepare_unit_change(self, unit_id, content, self.expected_revision)
+
+
 class UserServiceManagerApplication(Adw.Application):
     def __init__(self) -> None:
         super().__init__(application_id=APP_ID)
@@ -596,7 +762,10 @@ class UserServiceManagerApplication(Adw.Application):
         self.discovery: DiscoveryService | None = None
         self.commands: UnitCommandService | None = None
         self.journal: JournalService | None = None
+        self.editing: UnitEditingService | None = None
+        self.main_window: MainWindow | None = None
         self._log_windows: list[LogWindow] = []
+        self._editor_windows: list[UnitEditorWindow] = []
         self.appearance = AppearancePreference.SYSTEM
         self.catalog = ServiceCatalog(MockServiceBackend())
         self.use_systemd = os.environ.get("USM_BACKEND") == "systemd"
@@ -604,6 +773,10 @@ class UserServiceManagerApplication(Adw.Application):
         action = Gio.SimpleAction.new("appearance", GLib.VariantType.new("s"))
         action.connect("activate", self._on_appearance)
         self.add_action(action)
+        new_service = Gio.SimpleAction.new("new-service", None)
+        new_service.connect("activate", lambda *_args: self.open_editor())
+        self.add_action(new_service)
+        self.set_accels_for_action("app.new-service", ["<Primary>n"])
 
     def do_startup(self) -> None:
         Adw.Application.do_startup(self)
@@ -624,20 +797,26 @@ class UserServiceManagerApplication(Adw.Application):
             )
             self.journal = JournalService(self.discovery, SystemdJournalReader())
             if os.environ.get("USM_COMMANDS") == "enabled":
-                self.commands = UnitCommandService(
-                    self.discovery, GioSystemdUnitCommands()
+                command_adapter = GioSystemdUnitCommands()
+                self.commands = UnitCommandService(self.discovery, command_adapter)
+                self.editing = UnitEditingService(
+                    LocalUnitFileStore(),
+                    SystemdAnalyzeUnitVerifier(),
+                    command_adapter,
+                    self.discovery,
                 )
 
     def do_activate(self) -> None:
-        window = self.get_active_window() or MainWindow(self)
-        window.present()
+        if self.main_window is None:
+            self.main_window = MainWindow(self)
+        self.main_window.present()
         if not self.units:
             self.reload_units()
 
     def reload_units(self) -> None:
         if self._busy:
             return
-        window = self.get_active_window()
+        window = self.main_window
         if isinstance(window, MainWindow):
             window.show_loading()
         operation = self.discovery.scan if self.discovery else self.catalog.load
@@ -663,7 +842,7 @@ class UserServiceManagerApplication(Adw.Application):
         self._run_async(self.commands.reload, _("User manager reloaded"))
 
     def open_logs(self, unit_id: UnitId) -> None:
-        parent = self.get_active_window()
+        parent = self.main_window
         if self.journal is None or not isinstance(parent, MainWindow):
             return
         window = LogWindow(parent, unit_id, self.journal)
@@ -673,6 +852,95 @@ class UserServiceManagerApplication(Adw.Application):
             lambda closed, *_args: self._forget_log_window(closed),
         )
         window.present()
+
+    def open_editor(self, unit_id: UnitId | None = None) -> None:
+        if self.editing is None or self.main_window is None or self._busy:
+            return
+        window = UnitEditorWindow(self.main_window, self, unit_id)
+        self._editor_windows.append(window)
+        window.connect(
+            "close-request",
+            lambda closed, *_args: self._forget_editor_window(closed),
+        )
+        window.present()
+        if unit_id is not None:
+            window.set_busy(True, _("Loading service file…"))
+
+            def worker() -> None:
+                try:
+                    snapshot = asyncio.run(self.editing.load(unit_id))
+                except Exception as error:
+                    GLib.idle_add(window.show_error, str(error))
+                else:
+                    GLib.idle_add(window.set_snapshot, snapshot)
+
+            Thread(target=worker, daemon=True).start()
+
+    def prepare_unit_change(
+        self,
+        window: UnitEditorWindow,
+        unit_id: UnitId,
+        content: str,
+        expected_revision: str | None,
+    ) -> None:
+        if self.editing is None:
+            window.show_error(_("Service editing is not available."))
+            return
+
+        def worker() -> None:
+            try:
+                change = asyncio.run(
+                    self.editing.prepare(unit_id, content, expected_revision)
+                )
+            except Exception as error:
+                GLib.idle_add(window.show_error, str(error))
+            else:
+                GLib.idle_add(window.confirm, change)
+
+        Thread(target=worker, daemon=True).start()
+
+    def apply_unit_change(
+        self,
+        window: UnitEditorWindow,
+        change: PreparedUnitChange,
+        create_backup: bool,
+    ) -> None:
+        if self.editing is None or self._busy:
+            return
+        self._busy = True
+        window.set_busy(True, _("Saving service file…"))
+
+        def worker() -> None:
+            try:
+                units = asyncio.run(self.editing.apply(change, create_backup))
+            except Exception as error:
+                GLib.idle_add(self._editing_failed, window, str(error))
+            else:
+                GLib.idle_add(self._editing_applied, window, units)
+
+        Thread(target=worker, daemon=True).start()
+
+    def _editing_applied(
+        self,
+        window: UnitEditorWindow,
+        units: tuple[UnitRecord, ...],
+    ) -> bool:
+        self._busy = False
+        self.units = units
+        if self.main_window is not None:
+            self.main_window.show_units(units)
+            self.main_window.notify(_("Service file saved and user manager reloaded"))
+        window.close()
+        return GLib.SOURCE_REMOVE
+
+    def _editing_failed(self, window: UnitEditorWindow, message: str) -> bool:
+        self._busy = False
+        return window.show_error(message)
+
+    def _forget_editor_window(self, window: UnitEditorWindow) -> bool:
+        if window in self._editor_windows:
+            self._editor_windows.remove(window)
+        return False
 
     def _forget_log_window(self, window: LogWindow) -> bool:
         if window in self._log_windows:
@@ -697,7 +965,7 @@ class UserServiceManagerApplication(Adw.Application):
     ) -> bool:
         self._busy = False
         self.units = units
-        window = self.get_active_window()
+        window = self.main_window
         if isinstance(window, MainWindow):
             window.show_units(units)
             if message:
@@ -706,7 +974,7 @@ class UserServiceManagerApplication(Adw.Application):
 
     def _failed(self, message: str, preserve_units: bool = False) -> bool:
         self._busy = False
-        window = self.get_active_window()
+        window = self.main_window
         if isinstance(window, MainWindow):
             if preserve_units:
                 window.show_operation_error(message)
@@ -727,7 +995,7 @@ class UserServiceManagerApplication(Adw.Application):
             AppearancePreference.LIGHT: Adw.ColorScheme.FORCE_LIGHT,
             AppearancePreference.DARK: Adw.ColorScheme.FORCE_DARK,
         }[preference])
-        window = self.get_active_window()
+        window = self.main_window
         if isinstance(window, MainWindow):
             window._sync_appearance_class()
 

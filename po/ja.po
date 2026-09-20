@@ -202,3 +202,63 @@ msgstr "サービス情報を取得できませんでした"
 
 msgid "Copy the diagnostic details for troubleshooting."
 msgstr "問題調査のため診断情報をコピーできます。"
+
+msgid "Create a service file"
+msgstr "サービスファイルを作成"
+
+msgid "Edit service file"
+msgstr "サービスファイルを編集"
+
+msgid "Service file editor"
+msgstr "サービスファイルエディター"
+
+msgid "Validate and save"
+msgstr "検証して保存"
+
+msgid "Service name"
+msgstr "サービス名"
+
+msgid "Edit the complete systemd user service definition. Changes are checked before saving."
+msgstr "systemdユーザーサービスの定義全体を編集します。変更は保存前に検証されます。"
+
+msgid "Create a backup of the current file"
+msgstr "現在のファイルのバックアップを作成"
+
+msgid "Ready to edit"
+msgstr "編集できます"
+
+msgid "Service file could not be saved"
+msgstr "サービスファイルを保存できませんでした"
+
+msgid "create"
+msgstr "新規作成"
+
+msgid "replace"
+msgstr "更新"
+
+msgid " A timestamped backup will be created."
+msgstr " タイムスタンプ付きのバックアップも作成します。"
+
+msgid "Validation passed"
+msgstr "検証に成功しました"
+
+msgid "The app will {action} {name} and reload the user manager."
+msgstr "{name} を{action}し、ユーザーマネージャーを再読み込みします。"
+
+msgid "Save"
+msgstr "保存"
+
+msgid "Validating with systemd…"
+msgstr "systemdで検証しています…"
+
+msgid "Loading service file…"
+msgstr "サービスファイルを読み込んでいます…"
+
+msgid "Service editing is not available."
+msgstr "サービス編集は利用できません。"
+
+msgid "Saving service file…"
+msgstr "サービスファイルを保存しています…"
+
+msgid "Service file saved and user manager reloaded"
+msgstr "サービスファイルを保存し、ユーザーマネージャーを再読み込みしました"

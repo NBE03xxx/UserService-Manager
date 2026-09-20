@@ -3,6 +3,7 @@ from __future__ import annotations
 import ast
 from pathlib import Path
 import re
+import tomllib
 import unittest
 import xml.etree.ElementTree as ET
 
@@ -15,6 +16,9 @@ METAINFO = ROOT / "data/io.github.NBE03xxx.UserServiceManager.metainfo.xml"
 REQUIREMENTS = ROOT / "docs/REQUIREMENTS.md"
 TEST_PLAN = ROOT / "docs/TEST_PLAN.md"
 INSTALLED_LAUNCHER = ROOT / "src/user-service-manager.in"
+MESON = ROOT / "meson.build"
+PACKAGE_INIT = ROOT / "src/user_service_manager/__init__.py"
+DEBIAN_CHANGELOG = ROOT / "debian/changelog"
 
 
 class ProjectContractTests(unittest.TestCase):
@@ -80,6 +84,24 @@ class ProjectContractTests(unittest.TestCase):
             homepage.text,
             "https://github.com/NBE03xxx/UserService-Manager",
         )
+
+    def test_release_version_is_consistently_1_2_0(self) -> None:
+        version = "1.2.0"
+        project = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))
+        self.assertEqual(project["project"]["version"], version)
+        self.assertIn(f"version: '{version}'", MESON.read_text(encoding="utf-8"))
+        self.assertIn(f'__version__ = "{version}"', PACKAGE_INIT.read_text(encoding="utf-8"))
+        self.assertTrue(DEBIAN_CHANGELOG.read_text(encoding="utf-8").startswith(
+            f"user-service-manager ({version})"
+        ))
+        release = ET.parse(METAINFO).getroot().find(
+            f".//release[@version='{version}']"
+        )
+        self.assertIsNotNone(release)
+
+    def test_v1_1_0_is_documented_as_skipped(self) -> None:
+        self.assertIn("v1.1.0", (ROOT / "docs/DECISIONS.md").read_text(encoding="utf-8"))
+        self.assertNotIn("version=\"1.1.0\"", METAINFO.read_text(encoding="utf-8"))
 
 
 if __name__ == "__main__":

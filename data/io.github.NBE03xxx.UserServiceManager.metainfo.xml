@@ -15,6 +15,11 @@
   <url type="homepage">https://github.com/NBE03xxx/UserService-Manager</url>
   <launchable type="desktop-id">io.github.NBE03xxx.UserServiceManager.desktop</launchable>
   <releases>
+    <release version="1.2.0" date="2026-09-20">
+      <description>
+        <p>Add validated creation and editing of systemd user service files, optional backups, conflict detection, and safe reload integration.</p>
+      </description>
+    </release>
     <release version="1.0.1" date="2026-08-28">
       <description>
         <p>Refine the main header and show the managed-service count.</p>

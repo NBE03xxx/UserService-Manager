@@ -1,3 +1,12 @@
+user-service-manager (1.2.0) unstable; urgency=medium
+
+  * Add validated creation and editing of user service files.
+  * Add optional timestamped backups and external-change detection.
+  * Validate staged definitions with systemd before atomic replacement.
+  * Skip the withdrawn 1.1.0 version number.
+
+ -- NBE03xxx <NBE03xxx@users.noreply.github.com>  Sun, 20 Sep 2026 00:00:00 +0900
+
 user-service-manager (1.0.1) unstable; urgency=medium
 
   * Replace the repetitive header wording with a concise service list title.
