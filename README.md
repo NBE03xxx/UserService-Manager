@@ -1,5 +1,11 @@
 # User Service Manager — 設計文書
 
+## ダウンロード
+
+**[⬇ 最新版をダウンロード（GitHub Releases）](https://github.com/NBE03xxx/UserService-Manager/releases/latest)**
+
+Ubuntu向けの`.deb`パッケージと、改ざん・破損確認用のSHA-256チェックサムを取得できます。
+
 Ubuntu/GNOME/Wayland 上で、一般ユーザーが `systemd --user` のユーザーサービスを安全に確認・編集・操作するための GTK/libadwaita GUI アプリケーションです。第一検証環境は Ubuntu 26.04 LTS です。
 
 - GitHub: https://github.com/NBE03xxx/UserService-Manager
