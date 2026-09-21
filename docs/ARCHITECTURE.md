@@ -2,7 +2,7 @@
 
 ## 1. 方針
 
-UI、ユースケース、systemd/journal 接続、永続化、ポリシー判定を分離する。v0.1 は `.service` のみだが、ユニット種別ごとの能力をデータとして表現し、将来の timer/socket/path と別バックエンドの cron に備える。
+UI、ユースケース、systemd/journal接続、永続化、ポリシー判定を分離する。製品対象はsystemd user managerの`.service`に限定する。能力モデルとポートの分離は安全性とテスト容易性のために維持するが、他ユニット種別は期限未定の将来構想、cronバックエンドは非目標とする。
 
 ## 2. 論理構成
 
@@ -62,7 +62,7 @@ Settings:
   schema_version
   registered_unit_ids[]
   trusted_user_roots[]
-  language_preference: system (future: ja | en)
+  language: system localeから決定（ja系は日本語、その他は英語）
   appearance_preference: system | light | dark
 ```
 

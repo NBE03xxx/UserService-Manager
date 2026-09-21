@@ -15,6 +15,11 @@
   <url type="homepage">https://github.com/NBE03xxx/UserService-Manager</url>
   <launchable type="desktop-id">io.github.NBE03xxx.UserServiceManager.desktop</launchable>
   <releases>
+    <release version="1.3.1" date="2026-09-21">
+      <description>
+        <p>Clarify the supported user-service scope, future concepts, and features that are not planned.</p>
+      </description>
+    </release>
     <release version="1.3.0" date="2026-09-20">
       <description>
         <p>Add validated drop-in management, change previews, and reversible service deletion and restoration.</p>

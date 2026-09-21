@@ -15,6 +15,8 @@ SCHEMA = ROOT / "data/io.github.NBE03xxx.UserServiceManager.gschema.xml"
 METAINFO = ROOT / "data/io.github.NBE03xxx.UserServiceManager.metainfo.xml"
 REQUIREMENTS = ROOT / "docs/REQUIREMENTS.md"
 TEST_PLAN = ROOT / "docs/TEST_PLAN.md"
+README = ROOT / "README.md"
+ROADMAP = ROOT / "docs/ROADMAP.md"
 INSTALLED_LAUNCHER = ROOT / "src/user-service-manager.in"
 MESON = ROOT / "meson.build"
 PACKAGE_INIT = ROOT / "src/user_service_manager/__init__.py"
@@ -85,8 +87,8 @@ class ProjectContractTests(unittest.TestCase):
             "https://github.com/NBE03xxx/UserService-Manager",
         )
 
-    def test_release_version_is_consistently_1_3_0(self) -> None:
-        version = "1.3.0"
+    def test_release_version_is_consistently_1_3_1(self) -> None:
+        version = "1.3.1"
         project = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))
         self.assertEqual(project["project"]["version"], version)
         self.assertIn(f"version: '{version}'", MESON.read_text(encoding="utf-8"))
@@ -102,6 +104,18 @@ class ProjectContractTests(unittest.TestCase):
     def test_v1_1_0_is_documented_as_skipped(self) -> None:
         self.assertIn("v1.1.0", (ROOT / "docs/DECISIONS.md").read_text(encoding="utf-8"))
         self.assertNotIn("version=\"1.1.0\"", METAINFO.read_text(encoding="utf-8"))
+
+    def test_future_scope_policy_is_consistent(self) -> None:
+        requirements = REQUIREMENTS.read_text(encoding="utf-8")
+        roadmap = ROADMAP.read_text(encoding="utf-8")
+        readme = README.read_text(encoding="utf-8")
+        self.assertNotIn("I18N-003", requirements)
+        self.assertNotIn("EXT-002", requirements)
+        self.assertNotIn("## v0.4", roadmap)
+        for statement in ("cronバックエンド", "手動言語選択", "将来構想"):
+            with self.subTest(statement=statement):
+                self.assertIn(statement, readme)
+                self.assertIn(statement, roadmap)
 
 
 if __name__ == "__main__":

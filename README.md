@@ -5,7 +5,7 @@ Ubuntu/GNOME/Wayland 上で、一般ユーザーが `systemd --user` のユー�
 - GitHub: https://github.com/NBE03xxx/UserService-Manager
 - License: [MIT](LICENSE)
 
-## v1.3.0 の機能範囲
+## v1.3.1 の機能範囲
 
 - 対象ユニット: `.service` のみ
 - 発見起点: `~/.config/systemd/user/`
@@ -49,21 +49,34 @@ Ubuntu/GNOME/Wayland 上で、一般ユーザーが `systemd --user` のユー�
 | [RELEASE_READINESS.md](docs/RELEASE_READINESS.md) | リリース判定、完了証跡、残課題 |
 | [V0_2_RESULTS.md](docs/V0_2_RESULTS.md) | v0.2の作成・編集機能とv1.2.0受入の結果 |
 | [V0_3_RESULTS.md](docs/V0_3_RESULTS.md) | v0.3のdrop-in・ライフサイクル機能とv1.3.0受入の結果 |
+| [V1_3_1_RESULTS.md](docs/V1_3_1_RESULTS.md) | v1.3.1の文書方針整合と回帰検証結果 |
 
 開発者向けの現在の実行・検証方法は [DEVELOPMENT.md](DEVELOPMENT.md) を参照してください。
 
 ## 現在の実装状態
 
-従来機能とv0.2の作成・編集に加え、v0.3のdrop-in管理、変更プレビュー、復元可能なservice削除をv1.3.0として実装しました。v1.1.0は誤用のため欠番とし、再利用しません。
+従来機能とv0.2の作成・編集に加え、v0.3のdrop-in管理、変更プレビュー、復元可能なservice削除をv1.3.0で実装しました。v1.3.1は今後の対象範囲を明確にする文書更新版です。v1.1.0は誤用のため欠番とし、再利用しません。
 
-文書内の v0.1〜v0.4 は機能範囲のロードマップ番号です。v0.1は製品版v1.0.0、v0.2はv1.2.0、v0.3はv1.3.0に対応します。
+文書内のv0.1〜v0.3は実装済み機能範囲のロードマップ番号です。v0.1は製品版v1.0.0、v0.2はv1.2.0、v0.3はv1.3.0に対応します。
+
+## 今後の方針
+
+現在の製品範囲である、一般ユーザー自身のsystemd `.service`管理を重視します。次の項目は必要性が具体化するまで実装時期を定めない将来構想とします。
+
+- `.timer`、`.socket`、`.path`の発見・表示・操作
+- 関連ユニットの関係表示と、ユニット種別ごとの状態・操作能力表示
+- システムサービスを含む管理範囲の再検討
+- 高度なログフィルターと診断エクスポート
+- Ubuntu以外を含むDebian系ディストリビューションでの検証拡大
+
+cronバックエンドとアプリ内の手動言語選択は、現在の利用目的には不要なため実装計画に含めません。言語は引き続きsystem localeから日本語または英語を自動選択します。
 
 ## インストール
 
-v1.3.0のGitHub Release公開後、[GitHub Releases](https://github.com/NBE03xxx/UserService-Manager/releases/latest) から `user-service-manager_1.3.0_all.deb` をダウンロードし、ファイルのあるディレクトリで次を実行します。公開前の検証用packageはリリース準備文書に記載したchecksumと照合してください。
+[GitHub Releases](https://github.com/NBE03xxx/UserService-Manager/releases/latest) から `user-service-manager_1.3.1_all.deb` をダウンロードし、ファイルのあるディレクトリで次を実行します。checksumは同じReleaseに添付した`.sha256`ファイルで確認できます。
 
 ```bash
-sudo apt install ./user-service-manager_1.3.0_all.deb
+sudo apt install ./user-service-manager_1.3.1_all.deb
 ```
 
 インストール後はGNOMEのアプリ一覧から「ユーザーサービスマネージャー」を起動できます。アンインストールは次のコマンドで行います。

@@ -6,7 +6,7 @@
 
 ## 判定
 
-**v0.3実装受入: 合格。v1.3.0のコミット・push: 承認。**
+**v0.3実装受入: 合格。v1.3.0として公開済み。**
 
 複数drop-inの一覧・作成・編集・削除、systemd検証、変更差分、停止・無効化済みserviceの耐久化バックアップ付き削除、最新バックアップの非上書き復元を実装・検証した。
 
@@ -56,6 +56,8 @@
 - SHA-256: `9b9db6d023937ac50798f8f4508b1127fd1fc46ef43c2f3af9ef5ea1a1299937`
 - Ubuntu 26.04 VMへの1.2.0から1.3.0へのupgrade成功
 - package内の版番、依存関係、新規domain/port/adapter/application moduleを確認
+- GitHub Release: <https://github.com/NBE03xxx/UserService-Manager/releases/tag/v1.3.0>
+- GitHub Actions run `35517235239` 成功
 
 ## 既知の制約
 
